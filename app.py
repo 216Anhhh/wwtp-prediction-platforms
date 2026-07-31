@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import warnings
+import io
 warnings.filterwarnings('ignore')
 
 # ===== 中文字体配置 =====
@@ -156,13 +157,6 @@ st.markdown("""
     .status-normal { color: #3fb950; font-weight: 700; }
     .status-warning { color: #d29922; font-weight: 700; }
     .status-danger { color: #f85149; font-weight: 700; }
-    .upload-section {
-        background: #161b22;
-        border-radius: 10px;
-        padding: 1rem;
-        border: 1px dashed #30363d;
-        margin-top: 0.5rem;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -174,6 +168,12 @@ if 'df_loaded' not in st.session_state:
     st.session_state.df_loaded = None
 if 'data_source' not in st.session_state:
     st.session_state.data_source = 'default'
+if 'predicted' not in st.session_state:
+    st.session_state.predicted = False
+if 'pred_values' not in st.session_state:
+    st.session_state.pred_values = {}
+if 'input_values' not in st.session_state:
+    st.session_state.input_values = {}
 
 # ============ 加载默认数据 ============
 @st.cache_data
@@ -188,7 +188,6 @@ def load_default_data():
         except:
             return None
 
-# ============ 加载数据函数 ============
 def load_data():
     if st.session_state.data_source == 'uploaded' and st.session_state.df_loaded is not None:
         return st.session_state.df_loaded
@@ -333,6 +332,7 @@ with st.sidebar:
     if st.button("🚀 开始预测", use_container_width=True):
         st.session_state.predicted = True
         st.session_state.pred_values = {}
+        st.session_state.input_values = input_values.copy()
         for y_col in available_y:
             model = models[y_col]['xgb']
             pred_val = predict_value(input_values, model)
@@ -361,7 +361,7 @@ with st.sidebar:
                 st.session_state.df_loaded = uploaded_df
                 st.session_state.data_source = 'uploaded'
                 st.success(f"✅ 成功导入 {len(uploaded_df)} 行数据！")
-                st.info("🔄 请刷新页面或重新运行应用以使用新数据")
+                st.info("🔄 请点击'应用新数据'按钮更新模型")
                 if st.button("🔄 应用新数据"):
                     st.rerun()
         except Exception as e:
@@ -377,11 +377,12 @@ FM_MIN, FM_MAX = 20.0, 40.0
 SVI_MIN, SVI_MAX = 50.0, 150.0
 SRT_MIN, SRT_MAX = 5.0, 15.0
 
-# ============ 主区域 - 4个指标卡 ============
+# ============ 主区域 ============
 if 'predicted' in st.session_state and st.session_state.predicted:
     pred_fm = st.session_state.pred_values.get('F/M(%)', 0)
     pred_svi = st.session_state.pred_values.get('SVI', 0)
     pred_srt = st.session_state.pred_values.get('SRT', 0)
+    input_vals = st.session_state.input_values
     
     def get_status(val, min_val, max_val):
         if val < min_val:
@@ -395,7 +396,6 @@ if 'predicted' in st.session_state and st.session_state.predicted:
     svi_status, svi_class = get_status(pred_svi, SVI_MIN, SVI_MAX)
     srt_status, srt_class = get_status(pred_srt, SRT_MIN, SRT_MAX)
     
-    # ===== 优化SRT公式：SRT = (F/M% / 15%) × 12 =====
     raw_opt_srt = (pred_fm / 15.0) * 12.0
     opt_srt = max(SRT_MIN, min(SRT_MAX, raw_opt_srt))
     
@@ -436,6 +436,41 @@ if 'predicted' in st.session_state and st.session_state.predicted:
             <div class="sub">基于F/M优化 (5~15天)</div>
         </div>
         """, unsafe_allow_html=True)
+    
+    # ===== 数据导出 =====
+    st.markdown("---")
+    st.markdown("### 💾 导出预测结果")
+    
+    export_data = {
+        '输入参数': [],
+        '数值': []
+    }
+    for col, val in input_vals.items():
+        export_data['输入参数'].append(x_names_cn.get(col, col))
+        export_data['数值'].append(val)
+    
+    export_data['输入参数'].extend(['预测有机质占比(F/M)', '预测SVI', '预测SRT', '推荐最优污泥龄'])
+    export_data['数值'].extend([f"{pred_fm:.2f}%", f"{pred_svi:.2f}", f"{pred_srt:.2f}天", f"{opt_srt:.2f}天"])
+    
+    export_data['输入参数'].extend(['有机质占比状态', 'SVI状态', 'SRT状态'])
+    export_data['数值'].extend([fm_status, svi_status, srt_status])
+    
+    export_df = pd.DataFrame(export_data)
+    
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        export_df.to_excel(writer, sheet_name='预测结果', index=False)
+        df_preview = df.head(20)
+        df_preview.to_excel(writer, sheet_name='原始数据预览', index=False)
+    
+    st.download_button(
+        label="📥 下载预测结果 (Excel)",
+        data=output.getvalue(),
+        file_name=f"预测结果_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True
+    )
+    
 else:
     col1, col2, col3, col4 = st.columns(4)
     for col in [col1, col2, col3, col4]:
@@ -632,7 +667,7 @@ with tab2:
 # ===== Tab 3: 特征重要性 + 热力图 =====
 with tab3:
     st.markdown("### 📊 特征重要性柱状图")
-    model_type = st.radio("选择模型", ['XGBoost', 'Random Forest', 'Lasso'], horizontal=True, key="importance")
+        model_type = st.radio("选择模型", ['XGBoost', 'Random Forest', 'Lasso'], horizontal=True, key="importance")
     target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key="importance_target")
     
     if target:
@@ -658,7 +693,6 @@ with tab3:
         plt.tight_layout()
         st.pyplot(fig)
     
-    # ===== 热力图 =====
     st.markdown("---")
     st.markdown("### 🔥 特征相关性热力图")
     st.markdown("展示所有自变量与因变量之间的相关性")
@@ -744,7 +778,7 @@ with tab4:
         fig2.patch.set_facecolor('#0d1117')
         for bar, val in zip(bars1, r2_values):
             ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                                        f'{val:.3f}', ha='center', va='bottom', color='white', fontsize=9)
+                    f'{val:.3f}', ha='center', va='bottom', color='white', fontsize=9)
         
         # RMSE对比
         bars2 = ax2.bar(model_names, rmse_values, color=['#58a6ff', '#f0883e', '#3fb950', '#f85149'])
@@ -758,9 +792,11 @@ with tab4:
         plt.tight_layout()
         st.pyplot(fig2)
 
-# ===== Tab 5: SHAP解释 =====
+# ===== Tab 5: SHAP解释（优化颜色版） =====
 with tab5:
     st.markdown("### 🔍 SHAP 模型解释")
+    st.markdown("SHAP值解释每个特征对预测结果的贡献")
+    
     shap_target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key='shap')
     
     if st.button("生成 SHAP 解释", key="shap_btn"):
@@ -772,17 +808,100 @@ with tab5:
                 shap_values = explainer.shap_values(X_train)
                 feature_names = [x_names_en.get(col, col) for col in available_X]
                 
+                # ===== SHAP蜂群图 - 优化颜色 =====
                 st.markdown("#### 📊 SHAP 蜂群图")
                 fig, ax = plt.subplots(figsize=(10, 5))
-                shap.summary_plot(shap_values, X_train, feature_names=feature_names, show=False)
+                
+                # 设置背景为深色
+                ax.set_facecolor('#0d1117')
+                fig.patch.set_facecolor('#0d1117')
+                
+                # 生成SHAP图，使用高对比度颜色
+                shap.summary_plot(
+                    shap_values, 
+                    X_train, 
+                    feature_names=feature_names,
+                    show=False,
+                    color_bar=True,
+                    cmap=plt.get_cmap('coolwarm')
+                )
+                
+                # 手动调整轴标签颜色为白色
+                ax = plt.gca()
+                ax.tick_params(colors='white', labelsize=10)
+                ax.xaxis.label.set_color('white')
+                ax.yaxis.label.set_color('white')
+                ax.title.set_color('white')
+                
+                # 确保所有文本为白色
+                for text in ax.texts:
+                    text.set_color('white')
+                
                 plt.tight_layout()
                 st.pyplot(fig)
                 
+                # ===== SHAP特征重要性条形图 =====
                 st.markdown("#### 📊 SHAP 特征重要性")
                 fig2, ax2 = plt.subplots(figsize=(10, 5))
-                shap.summary_plot(shap_values, X_train, feature_names=feature_names, plot_type="bar", show=False)
+                
+                ax2.set_facecolor('#0d1117')
+                fig2.patch.set_facecolor('#0d1117')
+                
+                shap.summary_plot(
+                    shap_values, 
+                    X_train, 
+                    feature_names=feature_names, 
+                    plot_type="bar",
+                    show=False,
+                    color='#58a6ff'
+                )
+                
+                ax2 = plt.gca()
+                ax2.tick_params(colors='white', labelsize=10)
+                ax2.xaxis.label.set_color('white')
+                ax2.yaxis.label.set_color('white')
+                ax2.title.set_color('white')
+                
+                for patch in ax2.patches:
+                    patch.set_color('#58a6ff')
+                
                 plt.tight_layout()
                 st.pyplot(fig2)
+                
+                # ===== 单个预测解释 =====
+                st.markdown("---")
+                st.markdown("#### 🎯 当前输入的SHAP解释")
+                
+                input_array = np.array([st.session_state.input_values.get(col, 0) for col in available_X]).reshape(1, -1)
+                input_scaled = scaler.transform(input_array)
+                
+                single_shap = explainer.shap_values(input_scaled)
+                
+                contrib_data = []
+                for i, name in enumerate(feature_names):
+                    shap_val = single_shap[0][i]
+                    contrib_data.append({
+                        '特征': name,
+                        'SHAP值': f"{shap_val:.3f}",
+                        '影响方向': "⬆️ 正向" if shap_val > 0 else "⬇️ 负向"
+                    })
+                
+                contrib_df = pd.DataFrame(contrib_data)
+                st.dataframe(contrib_df, use_container_width=True)
+                
+                pred_val = model.predict(input_scaled)[0]
+                base_val = explainer.expected_value
+                
+                st.markdown(f"""
+                <div style="background:#161b22;padding:1rem;border-radius:10px;border:1px solid #30363d;margin-top:1rem;">
+                    <b style="color:#58a6ff;">预测 {y_names_cn.get(shap_target, shap_target)}:</b> 
+                    <span style="color:#f0f6fc;font-size:1.2rem;font-weight:bold;">{pred_val:.3f}</span>
+                    <br>
+                    <b style="color:#8b949e;">基准值:</b> 
+                    <span style="color:#f0f6fc;">{base_val:.3f}</span>
+                </div>
+                """, unsafe_allow_html=True)
+                
             except Exception as e:
                 st.error(f"SHAP 计算失败: {e}")
 
