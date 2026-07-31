@@ -667,7 +667,7 @@ with tab2:
 # ===== Tab 3: 特征重要性 + 热力图 =====
 with tab3:
     st.markdown("### 📊 特征重要性柱状图")
-        model_type = st.radio("选择模型", ['XGBoost', 'Random Forest', 'Lasso'], horizontal=True, key="importance")
+    model_type = st.radio("选择模型", ['XGBoost', 'Random Forest', 'Lasso'], horizontal=True, key="importance")
     target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key="importance_target")
     
     if target:
