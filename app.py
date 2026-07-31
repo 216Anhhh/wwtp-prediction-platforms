@@ -1,6 +1,5 @@
 # ===== Fix for Streamlit Cloud =====
 import matplotlib
-
 matplotlib.use('Agg')
 # ==================================
 
@@ -11,7 +10,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import warnings
-
 warnings.filterwarnings('ignore')
 
 # ===== 中文字体配置 =====
@@ -177,7 +175,6 @@ if 'df_loaded' not in st.session_state:
 if 'data_source' not in st.session_state:
     st.session_state.data_source = 'default'
 
-
 # ============ 加载默认数据 ============
 @st.cache_data
 def load_default_data():
@@ -191,7 +188,6 @@ def load_default_data():
         except:
             return None
 
-
 # ============ 加载数据函数 ============
 def load_data():
     if st.session_state.data_source == 'uploaded' and st.session_state.df_loaded is not None:
@@ -199,9 +195,8 @@ def load_data():
     else:
         return load_default_data()
 
-
 # ============ 数据准备 ============
-X_columns = ['Qoutm3/d', 'BOD5 (mg/l)', 'CODcr(mg/l)', 'SS(mg/l)',
+X_columns = ['Qoutm3/d', 'BOD5 (mg/l)', 'CODcr(mg/l)', 'SS(mg/l)', 
              'NH3-N(mg/l)', 'TP(mg/l)', 'TN(mg/l)', 'Tin℃']
 y_columns = ['F/M(%)', 'SVI', 'SRT']
 
@@ -263,41 +258,40 @@ if date_col:
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X_data)
 
-
 # ============ 训练模型 ============
 @st.cache_resource
 def train_models(X_data, y_data):
     X_scaled = scaler.fit_transform(X_data)
     models = {}
     results = {}
-
+    
     for y_col in y_data.columns:
         y_target = y_data[y_col].values
         X_train, X_test, y_train, y_test = train_test_split(
             X_scaled, y_target, test_size=0.2, random_state=42
         )
-
+        
         lr = LinearRegression()
         lr.fit(X_train, y_train)
-
+        
         lasso = Lasso(alpha=0.1, random_state=42, max_iter=1000)
         lasso.fit(X_train, y_train)
-
+        
         rf = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
         rf.fit(X_train, y_train)
-
+        
         xgb_model = xgb.XGBRegressor(
             n_estimators=50, learning_rate=0.1, max_depth=4,
             random_state=42, verbosity=0
         )
         xgb_model.fit(X_train, y_train)
-
+        
         models[y_col] = {
             'lr': lr, 'lasso': lasso, 'rf': rf, 'xgb': xgb_model,
             'X_train': X_train, 'X_test': X_test,
             'y_train': y_train, 'y_test': y_test
         }
-
+        
         results[y_col] = {}
         for name, model in [('lr', lr), ('lasso', lasso), ('rf', rf), ('xgb', xgb_model)]:
             y_pred = model.predict(X_test)
@@ -307,24 +301,21 @@ def train_models(X_data, y_data):
                 'rmse': np.sqrt(mean_squared_error(y_test, y_pred)),
                 'mae': mean_absolute_error(y_test, y_pred)
             }
-
+    
     return models, results
 
-
 models, results = train_models(X_data, y_data)
-
 
 def predict_value(input_dict, model):
     input_array = np.array([input_dict[col] for col in available_X]).reshape(1, -1)
     input_scaled = scaler.transform(input_array)
     return model.predict(input_scaled)[0]
 
-
 # ============ 侧边栏 ============
 with st.sidebar:
     st.markdown("## 📊 进水参数输入")
     st.markdown("---")
-
+    
     input_values = {}
     for idx, col in enumerate(available_X):
         min_val = float(X_data[col].min())
@@ -337,7 +328,7 @@ with st.sidebar:
             step=(max_val - min_val) / 100,
             format="%.2f"
         )
-
+    
     st.markdown("---")
     if st.button("🚀 开始预测", use_container_width=True):
         st.session_state.predicted = True
@@ -347,18 +338,18 @@ with st.sidebar:
             pred_val = predict_value(input_values, model)
             st.session_state.pred_values[y_col] = pred_val
         st.rerun()
-
+    
     # ===== Excel导入功能 =====
     st.markdown("---")
     st.markdown("## 📁 导入数据")
     st.markdown("上传Excel文件替换默认数据")
-
+    
     uploaded_file = st.file_uploader(
         "选择Excel文件",
         type=['xlsx', 'xls'],
         help="上传包含'日期'、'Qoutm3/d'、'BOD5 (mg/l)'等列的Excel文件"
     )
-
+    
     if uploaded_file is not None:
         try:
             uploaded_df = pd.read_excel(uploaded_file, sheet_name=0)
@@ -375,7 +366,7 @@ with st.sidebar:
                     st.rerun()
         except Exception as e:
             st.error(f"❌ 文件读取失败: {str(e)}")
-
+    
     if st.session_state.data_source == 'uploaded':
         st.info("📌 当前使用: 上传的数据")
     else:
@@ -391,8 +382,7 @@ if 'predicted' in st.session_state and st.session_state.predicted:
     pred_fm = st.session_state.pred_values.get('F/M(%)', 0)
     pred_svi = st.session_state.pred_values.get('SVI', 0)
     pred_srt = st.session_state.pred_values.get('SRT', 0)
-
-
+    
     def get_status(val, min_val, max_val):
         if val < min_val:
             return "偏低", "status-warning"
@@ -400,17 +390,17 @@ if 'predicted' in st.session_state and st.session_state.predicted:
             return "偏高", "status-danger"
         else:
             return "正常", "status-normal"
-
-
+    
     fm_status, fm_class = get_status(pred_fm, FM_MIN, FM_MAX)
     svi_status, svi_class = get_status(pred_svi, SVI_MIN, SVI_MAX)
     srt_status, srt_class = get_status(pred_srt, SRT_MIN, SRT_MAX)
-
-    raw_opt_srt = (pred_fm / 15.0) * 10.0
+    
+    # ===== 优化SRT公式：SRT = (F/M% / 15%) × 12 =====
+    raw_opt_srt = (pred_fm / 15.0) * 12.0
     opt_srt = max(SRT_MIN, min(SRT_MAX, raw_opt_srt))
-
+    
     col1, col2, col3, col4 = st.columns(4)
-
+    
     with col1:
         st.markdown(f"""
         <div class="metric-card">
@@ -470,7 +460,7 @@ with tab1:
     st.markdown("### 🎯 预测结果详情")
     if 'predicted' in st.session_state and st.session_state.predicted:
         col1, col2, col3 = st.columns(3)
-
+        
         with col1:
             st.markdown(f"""
             <div class="result-card" style="border-top-color:#58a6ff;">
@@ -482,7 +472,7 @@ with tab1:
                 </div>
             </div>
             """, unsafe_allow_html=True)
-
+        
         with col2:
             st.markdown(f"""
             <div class="result-card" style="border-top-color:#f0883e;">
@@ -494,7 +484,7 @@ with tab1:
                 </div>
             </div>
             """, unsafe_allow_html=True)
-
+        
         with col3:
             st.markdown(f"""
             <div class="result-card" style="border-top-color:#3fb950;">
@@ -506,7 +496,7 @@ with tab1:
                 </div>
             </div>
             """, unsafe_allow_html=True)
-
+        
         st.markdown("---")
         st.markdown("### 📍 SRT vs F/M 关系图")
         fig = go.Figure()
@@ -531,24 +521,24 @@ with tab1:
             plot_bgcolor='rgba(0,0,0,0)'
         )
         st.plotly_chart(fig, use_container_width=True)
-
+        
         st.markdown("---")
         st.markdown("### 💡 优化建议")
-
+        
         if pred_fm > FM_MAX:
             st.warning(f"⚠️ 有机质占比偏高 ({pred_fm:.2f}%)，建议：减少进水量或增加MLSS浓度")
         elif pred_fm < FM_MIN:
             st.warning(f"⚠️ 有机质占比偏低 ({pred_fm:.2f}%)，建议：增加进水量或减少MLSS浓度")
         else:
             st.success(f"✅ 有机质占比正常 ({pred_fm:.2f}%)")
-
+        
         if pred_srt > SRT_MAX:
             st.warning(f"⚠️ SRT偏高 ({pred_srt:.2f}天)，建议：减少污泥回流量，适当排泥")
         elif pred_srt < SRT_MIN:
             st.warning(f"⚠️ SRT偏低 ({pred_srt:.2f}天)，建议：增加污泥回流量")
         else:
             st.success(f"✅ SRT正常 ({pred_srt:.2f}天)")
-
+        
         st.info(f"🌟 推荐最优污泥龄: **{opt_srt:.2f}天** (基于F/M={pred_fm:.1f}%优化)")
     else:
         st.info("💡 请先在左侧侧边栏输入参数，然后点击 '开始预测' 按钮")
@@ -572,7 +562,7 @@ with tab2:
                 values = X_data[time_target]
                 title = x_names_cn.get(time_target, time_target)
                 color = '#f0883e'
-
+            
             ma_window = st.slider("移动平均窗口", min_value=1, max_value=10, value=3, key="ma_window")
             fig = go.Figure()
             fig.add_trace(go.Scatter(
@@ -598,15 +588,12 @@ with tab2:
                 plot_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig, use_container_width=True)
-
+            
             col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("当前值", f"{values.iloc[-1]:.2f}")
-            with col2:
-                st.metric("平均值", f"{values.mean():.2f}")
-            with col3:
-                st.metric("变化率", f"{((values.iloc[-1] - values.iloc[0]) / values.iloc[0] * 100):.2f}%")
-
+            with col1: st.metric("当前值", f"{values.iloc[-1]:.2f}")
+            with col2: st.metric("平均值", f"{values.mean():.2f}")
+            with col3: st.metric("变化率", f"{((values.iloc[-1] - values.iloc[0]) / values.iloc[0] * 100):.2f}%")
+        
         st.markdown("---")
         st.markdown("### 📊 多指标对比")
         selected_multi = st.multiselect(
@@ -646,25 +633,23 @@ with tab2:
 with tab3:
     st.markdown("### 📊 特征重要性柱状图")
     model_type = st.radio("选择模型", ['XGBoost', 'Random Forest', 'Lasso'], horizontal=True, key="importance")
-    target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x),
-                          key="importance_target")
-
+    target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key="importance_target")
+    
     if target:
         model_key = {'XGBoost': 'xgb', 'Random Forest': 'rf', 'Lasso': 'lasso'}[model_type]
         if model_key == 'lasso':
             importance = np.abs(models[target]['lasso'].coef_)
         else:
             importance = models[target][model_key].feature_importances_
-
+        
         sorted_idx = np.argsort(importance)[::-1]
         sorted_names = [x_names_en.get(available_X[i], available_X[i]) for i in sorted_idx]
         sorted_values = importance[sorted_idx]
-
+        
         fig, ax = plt.subplots(figsize=(10, 5))
         bars = ax.barh(sorted_names, sorted_values, color='#58a6ff')
         ax.set_xlabel('Feature Importance', fontsize=12, fontweight='bold', color='white')
-        ax.set_title(f'{model_type} - {y_names_en.get(target, target)} Feature Importance', fontsize=14,
-                     fontweight='bold', color='white')
+        ax.set_title(f'{model_type} - {y_names_en.get(target, target)} Feature Importance', fontsize=14, fontweight='bold', color='white')
         ax.invert_yaxis()
         ax.set_facecolor('#0d1117')
         fig.patch.set_facecolor('#0d1117')
@@ -672,21 +657,21 @@ with tab3:
             ax.text(v + 0.005, i, f'{v:.3f}', va='center', color='white', fontsize=9, fontweight='bold')
         plt.tight_layout()
         st.pyplot(fig)
-
+    
     # ===== 热力图 =====
     st.markdown("---")
     st.markdown("### 🔥 特征相关性热力图")
     st.markdown("展示所有自变量与因变量之间的相关性")
-
+    
     corr_data = pd.concat([X_data, y_data], axis=1)
     corr_matrix = corr_data.corr()
     rename_map = {**x_names_en, **y_names_en}
     corr_matrix = corr_matrix.rename(columns=rename_map, index=rename_map)
-
+    
     fig, ax = plt.subplots(figsize=(11, 8))
     sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0,
-                fmt='.2f', square=True, linewidths=0.5, ax=ax,
-                cbar_kws={'shrink': 0.8})
+               fmt='.2f', square=True, linewidths=0.5, ax=ax,
+               cbar_kws={'shrink': 0.8})
     ax.set_title('Feature Correlation Heatmap', fontsize=14, fontweight='bold', color='white')
     ax.set_facecolor('#0d1117')
     fig.patch.set_facecolor('#0d1117')
@@ -697,7 +682,7 @@ with tab3:
 with tab4:
     st.markdown("### 📉 真实值 vs 预测值散点图")
     target_eval = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key='eval')
-
+    
     if target_eval:
         model = models[target_eval]['xgb']
         y_test = models[target_eval]['y_test']
@@ -706,25 +691,24 @@ with tab4:
         mse = mean_squared_error(y_test, y_pred)
         rmse = np.sqrt(mse)
         mae = mean_absolute_error(y_test, y_pred)
-
+        
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.scatter(y_test, y_pred, alpha=0.6, color='#58a6ff', s=60)
         ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Ideal')
         ax.set_xlabel('True Value', fontsize=12, fontweight='bold', color='white')
         ax.set_ylabel('Predicted Value', fontsize=12, fontweight='bold', color='white')
-        ax.set_title(f'{y_names_en.get(target_eval, target_eval)} - R² = {r2:.4f}', fontsize=14, fontweight='bold',
-                     color='white')
+        ax.set_title(f'{y_names_en.get(target_eval, target_eval)} - R² = {r2:.4f}', fontsize=14, fontweight='bold', color='white')
         ax.legend(loc='upper left', facecolor='#0d1117', edgecolor='#30363d', labelcolor='white')
         ax.set_facecolor('#0d1117')
         fig.patch.set_facecolor('#0d1117')
         plt.tight_layout()
         st.pyplot(fig)
-
+        
         # ===== 模型评价指标 =====
         st.markdown("---")
         st.markdown("### 📊 模型评价指标")
         st.markdown("R²、MSE、RMSE、MAE 综合评价模型性能")
-
+        
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric("R² 分数", f"{r2:.4f}", help="越接近1越好")
@@ -734,23 +718,23 @@ with tab4:
             st.metric("RMSE", f"{rmse:.4f}", help="均方根误差，越小越好")
         with col4:
             st.metric("MAE", f"{mae:.4f}", help="平均绝对误差，越小越好")
-
+        
         # ===== 各模型对比 =====
         st.markdown("---")
         st.markdown("### 📊 各模型性能对比")
-
+        
         model_names = ['Linear', 'Lasso', 'RF', 'XGB']
-        r2_values = [results[target_eval]['lr']['r2'],
+        r2_values = [results[target_eval]['lr']['r2'], 
                      results[target_eval]['lasso']['r2'],
-                     results[target_eval]['rf']['r2'],
+                     results[target_eval]['rf']['r2'], 
                      results[target_eval]['xgb']['r2']]
-        rmse_values = [results[target_eval]['lr']['rmse'],
+        rmse_values = [results[target_eval]['lr']['rmse'], 
                        results[target_eval]['lasso']['rmse'],
-                       results[target_eval]['rf']['rmse'],
+                       results[target_eval]['rf']['rmse'], 
                        results[target_eval]['xgb']['rmse']]
-
+        
         fig2, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-
+        
         # R²对比
         bars1 = ax1.bar(model_names, r2_values, color=['#58a6ff', '#f0883e', '#3fb950', '#f85149'])
         ax1.set_ylabel('R² Score', fontsize=12, color='white')
@@ -759,62 +743,62 @@ with tab4:
         ax1.set_facecolor('#0d1117')
         fig2.patch.set_facecolor('#0d1117')
         for bar, val in zip(bars1, r2_values):
-            ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
-                     f'{val:.3f}', ha='center', va='bottom', color='white', fontsize=9)
-
+            ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                                        f'{val:.3f}', ha='center', va='bottom', color='white', fontsize=9)
+        
         # RMSE对比
         bars2 = ax2.bar(model_names, rmse_values, color=['#58a6ff', '#f0883e', '#3fb950', '#f85149'])
         ax2.set_ylabel('RMSE', fontsize=12, color='white')
         ax2.set_title('RMSE Comparison', fontsize=14, fontweight='bold', color='white')
         ax2.set_facecolor('#0d1117')
         for bar, val in zip(bars2, rmse_values):
-            ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
-                     f'{val:.3f}', ha='center', va='bottom', color='white', fontsize=9)
-
+            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                    f'{val:.3f}', ha='center', va='bottom', color='white', fontsize=9)
+        
         plt.tight_layout()
         st.pyplot(fig2)
 
-    # ===== Tab 5: SHAP解释 =====
-    with tab5:
-        st.markdown("### 🔍 SHAP 模型解释")
-        shap_target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key='shap')
+# ===== Tab 5: SHAP解释 =====
+with tab5:
+    st.markdown("### 🔍 SHAP 模型解释")
+    shap_target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key='shap')
+    
+    if st.button("生成 SHAP 解释", key="shap_btn"):
+        with st.spinner("⏳ 计算SHAP值中..."):
+            try:
+                model = models[shap_target]['xgb']
+                X_train = models[shap_target]['X_train']
+                explainer = shap.TreeExplainer(model)
+                shap_values = explainer.shap_values(X_train)
+                feature_names = [x_names_en.get(col, col) for col in available_X]
+                
+                st.markdown("#### 📊 SHAP 蜂群图")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                shap.summary_plot(shap_values, X_train, feature_names=feature_names, show=False)
+                plt.tight_layout()
+                st.pyplot(fig)
+                
+                st.markdown("#### 📊 SHAP 特征重要性")
+                fig2, ax2 = plt.subplots(figsize=(10, 5))
+                shap.summary_plot(shap_values, X_train, feature_names=feature_names, plot_type="bar", show=False)
+                plt.tight_layout()
+                st.pyplot(fig2)
+            except Exception as e:
+                st.error(f"SHAP 计算失败: {e}")
 
-        if st.button("生成 SHAP 解释", key="shap_btn"):
-            with st.spinner("⏳ 计算SHAP值中..."):
-                try:
-                    model = models[shap_target]['xgb']
-                    X_train = models[shap_target]['X_train']
-                    explainer = shap.TreeExplainer(model)
-                    shap_values = explainer.shap_values(X_train)
-                    feature_names = [x_names_en.get(col, col) for col in available_X]
-
-                    st.markdown("#### 📊 SHAP 蜂群图")
-                    fig, ax = plt.subplots(figsize=(10, 5))
-                    shap.summary_plot(shap_values, X_train, feature_names=feature_names, show=False)
-                    plt.tight_layout()
-                    st.pyplot(fig)
-
-                    st.markdown("#### 📊 SHAP 特征重要性")
-                    fig2, ax2 = plt.subplots(figsize=(10, 5))
-                    shap.summary_plot(shap_values, X_train, feature_names=feature_names, plot_type="bar", show=False)
-                    plt.tight_layout()
-                    st.pyplot(fig2)
-                except Exception as e:
-                    st.error(f"SHAP 计算失败: {e}")
-
-    # ===== Tab 6: 数据总览 =====
-    with tab6:
-        st.markdown("### 📋 数据总览")
-        st.dataframe(df.head(20), use_container_width=True)
-        st.markdown("---")
-        st.markdown("### 数据统计")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("#### 自变量统计")
-            st.dataframe(X_data.describe())
-        with col2:
-            st.markdown("#### 因变量统计")
-            st.dataframe(y_data.describe())
-
+# ===== Tab 6: 数据总览 =====
+with tab6:
+    st.markdown("### 📋 数据总览")
+    st.dataframe(df.head(20), use_container_width=True)
     st.markdown("---")
-    st.markdown("💧 **污水处理智能分析平台 v5.0** | 基于机器学习的多模型预测系统")
+    st.markdown("### 数据统计")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("#### 自变量统计")
+        st.dataframe(X_data.describe())
+    with col2:
+        st.markdown("#### 因变量统计")
+        st.dataframe(y_data.describe())
+
+st.markdown("---")
+st.markdown("💧 **污水处理智能分析平台 v5.0** | 基于机器学习的多模型预测系统")
