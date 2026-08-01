@@ -748,54 +748,54 @@ with tab1:
 # ===== Tab 2: 时间序列 =====
 with tab2:
     st.markdown("### 📈 历史趋势分析")
-    if date_col:
-        time_target = st.selectbox(
-            "选择指标查看时间序列",
-            available_y + ['Qoutm3/d', 'BOD5 (mg/l)', 'CODcr(mg/l)'],
-            format_func=lambda x: y_names_cn.get(x, x) if x in y_names_cn else x_names_cn.get(x, x),
-            key="time_series"
-        )
-        if time_target:
-            if time_target in y_data.columns:
-                values = y_data[time_target]
-                title = y_names_cn.get(time_target, time_target)
-                color = '#58a6ff'
-            else:
-                values = X_data[time_target]
-                title = x_names_cn.get(time_target, time_target)
-                color = '#f0883e'
-            
-            ma_window = st.slider("移动平均窗口", min_value=1, max_value=10, value=3, key="ma_window")
-            fig = go.Figure()
-            fig.add_trace(go.Scatter
-                x=date_data, y=values,
-                mode='lines+markers', name='原始数据',
-                line=dict(color=color, width=2), marker=dict(size=5, color=color)
+if date_col:
+    time_target = st.selectbox(
+        "选择指标查看时间序列",
+        available_y + ['Qoutm3/d', 'BOD5 (mg/l)', 'CODcr(mg/l)'],
+        format_func=lambda x: y_names_cn.get(x, x) if x in y_names_cn else x_names_cn.get(x, x),
+        key="time_series"
+    )
+    if time_target:
+        if time_target in y_data.columns:
+            values = y_data[time_target]
+            title = y_names_cn.get(time_target, time_target)
+            color = '#58a6ff'
+        else:
+            values = X_data[time_target]
+            title = x_names_cn.get(time_target, time_target)
+            color = '#f0883e'
+        
+        ma_window = st.slider("移动平均窗口", min_value=1, max_value=10, value=3, key="ma_window")
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=date_data, y=values,
+            mode='lines+markers', name='原始数据',
+            line=dict(color=color, width=2), marker=dict(size=5, color=color)
+        ))
+        if ma_window > 1:
+            ma_values = values.rolling(window=ma_window).mean()
+            fig.add_trace(go.Scatter(
+                x=date_data, y=ma_values,
+                mode='lines', name=f'{ma_window}日移动平均',
+                line=dict(color='#f85149', width=3, dash='dash')
             ))
-            if ma_window > 1:
-                ma_values = values.rolling(window=ma_window).mean()
-                fig.add_trace(go.Scatter(
-                    x=date_data, y=ma_values,
-                    mode='lines', name=f'{ma_window}日移动平均',
-                    line=dict(color='#f85149', width=3, dash='dash')
-                ))
-            fig.update_layout(
-                title=f'{title} 时间序列趋势',
-                xaxis_title='日期',
-                yaxis_title=title,
-                height=400,
-                hovermode='x unified',
-                template='plotly_dark' if st.session_state.theme == 'dark' else 'plotly_white',
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color=colors['text_color'])
-            )
-            st.plotly_chart(fig, use_container_width=True)
-            
-            col1, col2, col3 = st.columns(3)
-            with col1: st.metric("当前值", f"{values.iloc[-1]:.2f}")
-            with col2: st.metric("平均值", f"{values.mean():.2f}")
-            with col3: st.metric("变化率", f"{((values.iloc[-1] - values.iloc[0]) / values.iloc[0] * 100):.2f}%")
+        fig.update_layout(
+            title=f'{title} 时间序列趋势',
+            xaxis_title='日期',
+            yaxis_title=title,
+            height=400,
+            hovermode='x unified',
+            template='plotly_dark' if st.session_state.theme == 'dark' else 'plotly_white',
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color=colors['text_color'])
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1: st.metric("当前值", f"{values.iloc[-1]:.2f}")
+        with col2: st.metric("平均值", f"{values.mean():.2f}")
+        with col3: st.metric("变化率", f"{((values.iloc[-1] - values.iloc[0]) / values.iloc[0] * 100):.2f}%")
         
         st.markdown("---")
         st.markdown("### 📊 多指标对比")
