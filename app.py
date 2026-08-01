@@ -82,14 +82,17 @@ def get_theme_colors(theme):
             'text_color': '#ffffff',
             'input_bg': '#0d1117',
             'input_text': '#f0f6fc',
+            'select_bg': '#0d1117',
+            'select_text': '#f0f6fc',
+            'upload_bg': '#0d1117',
         }
     else:
         return {
             'bg': '#f5f7fa',
             'bg2': '#ffffff',
-            'sidebar_bg': '#f0f2f6',
+            'sidebar_bg': '#e8ecf1',
             'text': '#1a1a2e',
-            'text_secondary': '#4a5a6a',
+            'text_secondary': '#3a4a5a',
             'border': '#d0d7de',
             'primary': '#1a5276',
             'success': '#1a8a4a',
@@ -98,13 +101,13 @@ def get_theme_colors(theme):
             'card_bg': '#ffffff',
             'plot_bg': '#ffffff',
             'plot_face': '#ffffff',
-            'button_bg': '#e8f4f8',
-            'button_hover': '#d0eaf2',
-            'button_text': '#1a3a5c',
+            'button_bg': '#f5e6c8',
+            'button_hover': '#e8d5b8',
+            'button_text': '#1a1a2e',
             'tab_bg': '#ffffff',
-            'tab_active': '#4a9bc7',
+            'tab_active': '#b8d4e3',
             'tab_text': '#4a5a6a',
-            'tab_active_text': '#ffffff',
+            'tab_active_text': '#1a1a2e',
             'axis_color': '#1a1a2e',
             'tick_color': '#1a1a2e',
             'label_color': '#1a1a2e',
@@ -112,6 +115,9 @@ def get_theme_colors(theme):
             'text_color': '#1a1a2e',
             'input_bg': '#f5f7fa',
             'input_text': '#1a1a2e',
+            'select_bg': '#ffffff',
+            'select_text': '#1a1a2e',
+            'upload_bg': '#f5f7fa',
         }
 
 colors = get_theme_colors(st.session_state.theme)
@@ -139,62 +145,112 @@ update_matplotlib_theme(st.session_state.theme, colors)
 
 # ============ 动态CSS ============
 def get_css(colors, theme):
-    button_css = """
-    .stButton button {
-        background: """ + colors['button_bg'] + """;
-        color: """ + colors['button_text'] + """;
-        font-weight: 700;
-        border: none;
-        border-radius: 8px;
-        padding: 0.6rem 2rem;
-        width: 100%;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    }
-    .stButton button:hover {
-        background: """ + colors['button_hover'] + """;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .stButton button:active {
-        box-shadow: 0 0 0 3px """ + colors['primary'] + """80;
-    }
-    """
+    if theme == 'dark':
+        button_css = """
+        .stButton button {
+            background: #238636;
+            color: #ffffff;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem 2rem;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        .stButton button:hover {
+            background: #2ea043;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(35, 134, 54, 0.4);
+        }
+        """
+    else:
+        button_css = """
+        .stButton button {
+            background: #e8d5b8;
+            color: #1a1a2e;
+            font-weight: 700;
+            border: 2px solid #d4a574;
+            border-radius: 8px;
+            padding: 0.6rem 2rem;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        .stButton button:hover {
+            background: #dcc4a0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4);
+        }
+        .stButton button:active {
+            box-shadow: 0 0 0 3px rgba(26, 82, 118, 0.3);
+        }
+        """
     
     return f"""
     <style>
-    /* 主背景 */
     .stApp {{ background-color: {colors['bg']}; }}
     
-    /* 侧边栏 - 同步主题颜色 */
-    .css-1d391kg, .st-emotion-cache-1d391kg {{
+    /* ===== 侧边栏 - 关键修复 ===== */
+    section[data-testid="stSidebar"] {{
         background-color: {colors['sidebar_bg']} !important;
         border-right: 1px solid {colors['border']} !important;
     }}
-    
-    /* 侧边栏内的文字颜色 */
-    .css-1d391kg .stMarkdown, .st-emotion-cache-1d391kg .stMarkdown {{
+    section[data-testid="stSidebar"] .stMarkdown {{
+        color: {colors['text']} !important;
+    }}
+    section[data-testid="stSidebar"] .stMarkdown p {{
+        color: {colors['text']} !important;
+    }}
+    section[data-testid="stSidebar"] h1, 
+    section[data-testid="stSidebar"] h2, 
+    section[data-testid="stSidebar"] h3, 
+    section[data-testid="stSidebar"] h4 {{
         color: {colors['text']} !important;
     }}
     
-    /* 侧边栏输入框 */
-    .stNumberInput input, .stTextInput input, .stSelectbox select {{
+    /* ===== 侧边栏输入框 ===== */
+    section[data-testid="stSidebar"] .stNumberInput input,
+    section[data-testid="stSidebar"] .stTextInput input,
+    section[data-testid="stSidebar"] .stSelectbox select,
+    section[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] {{
         background-color: {colors['input_bg']} !important;
         color: {colors['input_text']} !important;
         border: 1px solid {colors['border']} !important;
     }}
-    
-    /* 侧边栏标签 */
-    .stNumberInput label, .stTextInput label, .stSelectbox label {{
+    section[data-testid="stSidebar"] .stNumberInput label,
+    section[data-testid="stSidebar"] .stTextInput label,
+    section[data-testid="stSidebar"] .stSelectbox label {{
         color: {colors['text_secondary']} !important;
     }}
     
-    /* 侧边栏分隔线 */
-    hr {{
-        border-color: {colors['border']} !important;
+    /* ===== 下拉选择框 - 关键修复（白底黑字） ===== */
+    .stSelectbox div[data-baseweb="select"] div {{
+        background-color: {colors['select_bg']} !important;
+        color: {colors['select_text']} !important;
+    }}
+    .stSelectbox ul {{
+        background-color: {colors['select_bg']} !important;
+    }}
+    .stSelectbox li {{
+        color: {colors['select_text']} !important;
+        background-color: {colors['select_bg']} !important;
+    }}
+    .stSelectbox li:hover {{
+        background-color: {colors['button_hover']} !important;
     }}
     
+    /* ===== 文件上传器 ===== */
+    .stFileUploader {{
+        background-color: {colors['upload_bg']} !important;
+        border: 1px dashed {colors['border']} !important;
+        border-radius: 8px !important;
+    }}
+    .stFileUploader label {{
+        color: {colors['text_secondary']} !important;
+    }}
+    
+    /* ===== 主区域标题 ===== */
     .main-header {{
         font-size: 2.5rem;
         font-weight: 700;
@@ -211,6 +267,8 @@ def get_css(colors, theme):
         border-bottom: 1px solid {colors['border']};
         margin-bottom: 1.5rem;
     }}
+    
+    /* ===== 卡片 ===== */
     .metric-card {{
         background: {colors['card_bg']};
         border-radius: 10px;
@@ -257,7 +315,11 @@ def get_css(colors, theme):
         color: {colors['text']};
         margin: 6px 0;
     }}
+    
+    /* ===== 按钮 ===== */
     {button_css}
+    
+    /* ===== Tab ===== */
     .stTabs [data-baseweb="tab-list"] {{
         gap: 4px;
         background: {colors['tab_bg']};
@@ -277,21 +339,16 @@ def get_css(colors, theme):
         color: {colors['tab_active_text']};
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }}
+    
+    /* ===== 状态标签 ===== */
     .status-normal {{ color: {colors['success']}; font-weight: 700; }}
     .status-warning {{ color: {colors['warning']}; font-weight: 700; }}
     .status-danger {{ color: {colors['danger']}; font-weight: 700; }}
     
-    /* 文件上传器 */
-    .stFileUploader {{
-        background-color: {colors['input_bg']} !important;
-        border: 1px dashed {colors['border']} !important;
-        border-radius: 8px !important;
-    }}
-    .stFileUploader label {{
-        color: {colors['text_secondary']} !important;
-    }}
+    /* ===== 分割线 ===== */
+    hr {{ border-color: {colors['border']} !important; }}
     
-    /* 信息框 */
+    /* ===== 信息框 ===== */
     .stAlert {{
         background-color: {colors['card_bg']} !important;
         border-color: {colors['border']} !important;
@@ -487,17 +544,12 @@ with st.sidebar:
     
     col1, col2 = st.columns(2)
     
-    is_dark = st.session_state.theme == 'dark'
-    is_light = st.session_state.theme == 'light'
-    
     with col1:
-        dark_active = "border: 2px solid #58a6ff; box-shadow: 0 0 15px rgba(88, 166, 255, 0.3);" if is_dark else ""
         if st.button("🌙 暗色", use_container_width=True, key="theme_dark"):
             st.session_state.theme = 'dark'
             st.rerun()
     
     with col2:
-        light_active = "border: 2px solid #f0c27a; box-shadow: 0 0 15px rgba(240, 194, 122, 0.4);" if is_light else ""
         if st.button("☀️ 明亮", use_container_width=True, key="theme_light"):
             st.session_state.theme = 'light'
             st.rerun()
@@ -748,54 +800,54 @@ with tab1:
 # ===== Tab 2: 时间序列 =====
 with tab2:
     st.markdown("### 📈 历史趋势分析")
-if date_col:
-    time_target = st.selectbox(
-        "选择指标查看时间序列",
-        available_y + ['Qoutm3/d', 'BOD5 (mg/l)', 'CODcr(mg/l)'],
-        format_func=lambda x: y_names_cn.get(x, x) if x in y_names_cn else x_names_cn.get(x, x),
-        key="time_series"
-    )
-    if time_target:
-        if time_target in y_data.columns:
-            values = y_data[time_target]
-            title = y_names_cn.get(time_target, time_target)
-            color = '#58a6ff'
-        else:
-            values = X_data[time_target]
-            title = x_names_cn.get(time_target, time_target)
-            color = '#f0883e'
-        
-        ma_window = st.slider("移动平均窗口", min_value=1, max_value=10, value=3, key="ma_window")
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=date_data, y=values,
-            mode='lines+markers', name='原始数据',
-            line=dict(color=color, width=2), marker=dict(size=5, color=color)
-        ))
-        if ma_window > 1:
-            ma_values = values.rolling(window=ma_window).mean()
-            fig.add_trace(go.Scatter(
-                x=date_data, y=ma_values,
-                mode='lines', name=f'{ma_window}日移动平均',
-                line=dict(color='#f85149', width=3, dash='dash')
-            ))
-        fig.update_layout(
-            title=f'{title} 时间序列趋势',
-            xaxis_title='日期',
-            yaxis_title=title,
-            height=400,
-            hovermode='x unified',
-            template='plotly_dark' if st.session_state.theme == 'dark' else 'plotly_white',
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color=colors['text_color'])
+    if date_col:
+        time_target = st.selectbox(
+            "选择指标查看时间序列",
+            available_y + ['Qoutm3/d', 'BOD5 (mg/l)', 'CODcr(mg/l)'],
+            format_func=lambda x: y_names_cn.get(x, x) if x in y_names_cn else x_names_cn.get(x, x),
+            key="time_series"
         )
-        st.plotly_chart(fig, use_container_width=True)
-        
-        col1, col2, col3 = st.columns(3)
-        with col1: st.metric("当前值", f"{values.iloc[-1]:.2f}")
-        with col2: st.metric("平均值", f"{values.mean():.2f}")
-        with col3: st.metric("变化率", f"{((values.iloc[-1] - values.iloc[0]) / values.iloc[0] * 100):.2f}%")
+        if time_target:
+            if time_target in y_data.columns:
+                values = y_data[time_target]
+                title = y_names_cn.get(time_target, time_target)
+                color = '#58a6ff'
+            else:
+                values = X_data[time_target]
+                title = x_names_cn.get(time_target, time_target)
+                color = '#f0883e'
+            
+            ma_window = st.slider("移动平均窗口", min_value=1, max_value=10, value=3, key="ma_window")
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=date_data, y=values,
+                mode='lines+markers', name='原始数据',
+                line=dict(color=color, width=2), marker=dict(size=5, color=color)
+            ))
+            if ma_window > 1:
+                ma_values = values.rolling(window=ma_window).mean()
+                fig.add_trace(go.Scatter(
+                    x=date_data, y=ma_values,
+                    mode='lines', name=f'{ma_window}日移动平均',
+                    line=dict(color='#f85149', width=3, dash='dash')
+                ))
+            fig.update_layout(
+                title=f'{title} 时间序列趋势',
+                xaxis_title='日期',
+                yaxis_title=title,
+                height=400,
+                hovermode='x unified',
+                template='plotly_dark' if st.session_state.theme == 'dark' else 'plotly_white',
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color=colors['text_color'])
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+            col1, col2, col3 = st.columns(3)
+            with col1: st.metric("当前值", f"{values.iloc[-1]:.2f}")
+            with col2: st.metric("平均值", f"{values.mean():.2f}")
+            with col3: st.metric("变化率", f"{((values.iloc[-1] - values.iloc[0]) / values.iloc[0] * 100):.2f}%")
         
         st.markdown("---")
         st.markdown("### 📊 多指标对比")
@@ -1084,4 +1136,3 @@ with tab6:
 
 st.markdown("---")
 st.markdown(f"💧 **污水处理智能分析平台 v5.0** | 基于机器学习的多模型预测系统 | {'🌙 暗色模式' if st.session_state.theme == 'dark' else '☀️ 明亮模式'}")
-          
