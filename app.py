@@ -49,14 +49,15 @@ st.set_page_config(
 
 # ============ 初始化主题 ============
 if 'theme' not in st.session_state:
-    st.session_state.theme = 'dark'  # 'dark' or 'light'
+    st.session_state.theme = 'dark'
 
 # ============ 主题配色 ============
 def get_theme_colors(theme):
     if theme == 'dark':
         return {
             'bg': '#0e1117',
-            'bg2': '#161b22',
+            'bg2': '#0d1117',
+            'sidebar_bg': '#0d1117',
             'text': '#f0f6fc',
             'text_secondary': '#8b949e',
             'border': '#30363d',
@@ -69,19 +70,27 @@ def get_theme_colors(theme):
             'plot_face': '#0d1117',
             'button_bg': '#238636',
             'button_hover': '#2ea043',
-            'button_text': 'white',
+            'button_text': '#ffffff',
             'tab_bg': '#161b22',
             'tab_active': '#238636',
             'tab_text': '#8b949e',
-            'tab_active_text': 'white',
+            'tab_active_text': '#ffffff',
+            'axis_color': '#ffffff',
+            'tick_color': '#ffffff',
+            'label_color': '#ffffff',
+            'title_color': '#ffffff',
+            'text_color': '#ffffff',
+            'input_bg': '#0d1117',
+            'input_text': '#f0f6fc',
         }
     else:
         return {
-            'bg': '#f7f9fc',
+            'bg': '#f5f7fa',
             'bg2': '#ffffff',
-            'text': '#1a3a5c',
-            'text_secondary': '#5a6a7a',
-            'border': '#dce3ed',
+            'sidebar_bg': '#f0f2f6',
+            'text': '#1a1a2e',
+            'text_secondary': '#4a5a6a',
+            'border': '#d0d7de',
             'primary': '#1a5276',
             'success': '#1a8a4a',
             'warning': '#b87a0a',
@@ -89,24 +98,51 @@ def get_theme_colors(theme):
             'card_bg': '#ffffff',
             'plot_bg': '#ffffff',
             'plot_face': '#ffffff',
-            'button_bg': '#5bc0de',
-            'button_hover': '#46b8da',
+            'button_bg': '#e8f4f8',
+            'button_hover': '#d0eaf2',
             'button_text': '#1a3a5c',
             'tab_bg': '#ffffff',
-            'tab_active': '#5bc0de',
-            'tab_text': '#5a6a7a',
-            'tab_active_text': '#1a3a5c',
+            'tab_active': '#4a9bc7',
+            'tab_text': '#4a5a6a',
+            'tab_active_text': '#ffffff',
+            'axis_color': '#1a1a2e',
+            'tick_color': '#1a1a2e',
+            'label_color': '#1a1a2e',
+            'title_color': '#1a1a2e',
+            'text_color': '#1a1a2e',
+            'input_bg': '#f5f7fa',
+            'input_text': '#1a1a2e',
         }
 
 colors = get_theme_colors(st.session_state.theme)
 
+# ============ 更新matplotlib颜色 ============
+def update_matplotlib_theme(theme, colors):
+    if theme == 'dark':
+        plt.rcParams['text.color'] = 'white'
+        plt.rcParams['axes.labelcolor'] = 'white'
+        plt.rcParams['xtick.color'] = 'white'
+        plt.rcParams['ytick.color'] = 'white'
+        plt.rcParams['axes.edgecolor'] = '#30363d'
+        plt.rcParams['figure.facecolor'] = '#0d1117'
+        plt.rcParams['axes.facecolor'] = '#0d1117'
+    else:
+        plt.rcParams['text.color'] = '#1a1a2e'
+        plt.rcParams['axes.labelcolor'] = '#1a1a2e'
+        plt.rcParams['xtick.color'] = '#1a1a2e'
+        plt.rcParams['ytick.color'] = '#1a1a2e'
+        plt.rcParams['axes.edgecolor'] = '#d0d7de'
+        plt.rcParams['figure.facecolor'] = '#ffffff'
+        plt.rcParams['axes.facecolor'] = '#ffffff'
+
+update_matplotlib_theme(st.session_state.theme, colors)
+
 # ============ 动态CSS ============
 def get_css(colors, theme):
-    # 明亮模式按键颜色 - 每组不同
-    button_colors = """
+    button_css = """
     .stButton button {
-        background: #5bc0de;
-        color: #1a3a5c;
+        background: """ + colors['button_bg'] + """;
+        color: """ + colors['button_text'] + """;
         font-weight: 700;
         border: none;
         border-radius: 8px;
@@ -117,45 +153,48 @@ def get_css(colors, theme):
         box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     }
     .stButton button:hover {
-        background: #46b8da;
+        background: """ + colors['button_hover'] + """;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(91, 192, 222, 0.4);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-    .stButton button:active, .stButton button:focus {
-        background: #2ea0c4;
-        box-shadow: 0 0 0 3px rgba(91, 192, 222, 0.5);
+    .stButton button:active {
+        box-shadow: 0 0 0 3px """ + colors['primary'] + """80;
     }
     """
     
-    if theme == 'dark':
-        button_css = """
-        .stButton button {
-            background: #238636;
-            color: white;
-            font-weight: 700;
-            border: none;
-            border-radius: 8px;
-            padding: 0.6rem 2rem;
-            width: 100%;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-        }
-        .stButton button:hover {
-            background: #2ea043;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(35, 134, 54, 0.4);
-        }
-        .stButton button:active, .stButton button:focus {
-            background: #2ea043;
-            box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.5);
-        }
-        """
-    else:
-        button_css = button_colors
-    
     return f"""
     <style>
+    /* 主背景 */
     .stApp {{ background-color: {colors['bg']}; }}
+    
+    /* 侧边栏 - 同步主题颜色 */
+    .css-1d391kg, .st-emotion-cache-1d391kg {{
+        background-color: {colors['sidebar_bg']} !important;
+        border-right: 1px solid {colors['border']} !important;
+    }}
+    
+    /* 侧边栏内的文字颜色 */
+    .css-1d391kg .stMarkdown, .st-emotion-cache-1d391kg .stMarkdown {{
+        color: {colors['text']} !important;
+    }}
+    
+    /* 侧边栏输入框 */
+    .stNumberInput input, .stTextInput input, .stSelectbox select {{
+        background-color: {colors['input_bg']} !important;
+        color: {colors['input_text']} !important;
+        border: 1px solid {colors['border']} !important;
+    }}
+    
+    /* 侧边栏标签 */
+    .stNumberInput label, .stTextInput label, .stSelectbox label {{
+        color: {colors['text_secondary']} !important;
+    }}
+    
+    /* 侧边栏分隔线 */
+    hr {{
+        border-color: {colors['border']} !important;
+    }}
+    
     .main-header {{
         font-size: 2.5rem;
         font-weight: 700;
@@ -241,29 +280,22 @@ def get_css(colors, theme):
     .status-normal {{ color: {colors['success']}; font-weight: 700; }}
     .status-warning {{ color: {colors['warning']}; font-weight: 700; }}
     .status-danger {{ color: {colors['danger']}; font-weight: 700; }}
-    .css-1d391kg {{ background-color: {colors['bg2']}; }}
     
-    /* 明亮模式侧边栏主题切换按钮特殊样式 */
-    .theme-btn-dark {{
-        background: #1a1a2e !important;
-        color: white !important;
+    /* 文件上传器 */
+    .stFileUploader {{
+        background-color: {colors['input_bg']} !important;
+        border: 1px dashed {colors['border']} !important;
+        border-radius: 8px !important;
     }}
-    .theme-btn-dark:hover {{
-        background: #2a2a4e !important;
-        box-shadow: 0 4px 12px rgba(26, 26, 46, 0.4) !important;
+    .stFileUploader label {{
+        color: {colors['text_secondary']} !important;
     }}
-    .theme-btn-light {{
-        background: #f0e6d3 !important;
-        color: #1a3a5c !important;
-        border: 2px solid #d4a574 !important;
-    }}
-    .theme-btn-light:hover {{
-        background: #e8d5b8 !important;
-        box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4) !important;
-    }}
-    .theme-btn-active {{
-        box-shadow: 0 0 0 3px {colors['primary']} !important;
-        transform: scale(1.02);
+    
+    /* 信息框 */
+    .stAlert {{
+        background-color: {colors['card_bg']} !important;
+        border-color: {colors['border']} !important;
+        color: {colors['text']} !important;
     }}
     </style>
     """
@@ -272,24 +304,6 @@ st.markdown(get_css(colors, st.session_state.theme), unsafe_allow_html=True)
 
 st.markdown(f'<div class="main-header">💧 污水处理智能分析平台</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="sub-header">基于进水参数的污泥指标预测与SRT优化系统</div>', unsafe_allow_html=True)
-
-# ============ 更新matplotlib颜色 ============
-if st.session_state.theme == 'dark':
-    plt.rcParams['text.color'] = 'white'
-    plt.rcParams['axes.labelcolor'] = 'white'
-    plt.rcParams['xtick.color'] = 'white'
-    plt.rcParams['ytick.color'] = 'white'
-    plt.rcParams['axes.edgecolor'] = '#30363d'
-    plt.rcParams['figure.facecolor'] = '#0d1117'
-    plt.rcParams['axes.facecolor'] = '#0d1117'
-else:
-    plt.rcParams['text.color'] = '#1a3a5c'
-    plt.rcParams['axes.labelcolor'] = '#1a3a5c'
-    plt.rcParams['xtick.color'] = '#1a3a5c'
-    plt.rcParams['ytick.color'] = '#1a3a5c'
-    plt.rcParams['axes.edgecolor'] = '#dce3ed'
-    plt.rcParams['figure.facecolor'] = '#ffffff'
-    plt.rcParams['axes.facecolor'] = '#ffffff'
 
 # ============ 初始化session_state ============
 if 'df_loaded' not in st.session_state:
@@ -471,28 +485,23 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("## 🎨 主题设置")
     
-    # 主题切换按钮 - 带高亮效果
     col1, col2 = st.columns(2)
     
-    # 判断当前激活的主题
     is_dark = st.session_state.theme == 'dark'
     is_light = st.session_state.theme == 'light'
     
     with col1:
-        # 暗色模式按钮 - 当前激活时显示高亮边框
-        dark_style = "border: 2px solid #58a6ff; box-shadow: 0 0 15px rgba(88, 166, 255, 0.3);" if is_dark else ""
+        dark_active = "border: 2px solid #58a6ff; box-shadow: 0 0 15px rgba(88, 166, 255, 0.3);" if is_dark else ""
         if st.button("🌙 暗色", use_container_width=True, key="theme_dark"):
             st.session_state.theme = 'dark'
             st.rerun()
     
     with col2:
-        # 明亮模式按钮 - 当前激活时显示高亮边框
-        light_style = "border: 2px solid #f0c27a; box-shadow: 0 0 15px rgba(240, 194, 122, 0.4);" if is_light else ""
+        light_active = "border: 2px solid #f0c27a; box-shadow: 0 0 15px rgba(240, 194, 122, 0.4);" if is_light else ""
         if st.button("☀️ 明亮", use_container_width=True, key="theme_light"):
             st.session_state.theme = 'light'
             st.rerun()
     
-    # 显示当前主题状态
     current_theme = "🌙 暗色模式" if st.session_state.theme == 'dark' else "☀️ 明亮模式"
     st.markdown(f"<p style='text-align:center;color:{colors['text_secondary']};font-size:0.8rem;font-weight:600;'>当前: {current_theme}</p>", unsafe_allow_html=True)
     
@@ -700,7 +709,7 @@ with tab1:
         fig.add_trace(go.Scatter(
             x=[pred_srt], y=[pred_fm],
             mode='markers', name='预测值',
-            marker=dict(size=22, color='#f85149', symbol='star', line=dict(width=2, color='white' if st.session_state.theme == 'dark' else '#1a3a5c'))
+            marker=dict(size=22, color='#f85149', symbol='star', line=dict(width=2, color='white' if st.session_state.theme == 'dark' else '#1a1a2e'))
         ))
         fig.update_layout(
             title='SRT vs F/M 关系图',
@@ -710,7 +719,8 @@ with tab1:
             hovermode='closest',
             template='plotly_dark' if st.session_state.theme == 'dark' else 'plotly_white',
             paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)'
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color=colors['text_color'])
         )
         st.plotly_chart(fig, use_container_width=True)
         
@@ -757,7 +767,7 @@ with tab2:
             
             ma_window = st.slider("移动平均窗口", min_value=1, max_value=10, value=3, key="ma_window")
             fig = go.Figure()
-            fig.add_trace(go.Scatter(
+            fig.add_trace(go.Scatter
                 x=date_data, y=values,
                 mode='lines+markers', name='原始数据',
                 line=dict(color=color, width=2), marker=dict(size=5, color=color)
@@ -777,7 +787,8 @@ with tab2:
                 hovermode='x unified',
                 template='plotly_dark' if st.session_state.theme == 'dark' else 'plotly_white',
                 paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color=colors['text_color'])
             )
             st.plotly_chart(fig, use_container_width=True)
             
@@ -797,7 +808,7 @@ with tab2:
         )
         if selected_multi:
             fig2 = go.Figure()
-            colors = ['#58a6ff', '#f85149', '#3fb950', '#d29922', '#f0883e']
+            colors_list = ['#58a6ff', '#f85149', '#3fb950', '#d29922', '#f0883e']
             for idx, col in enumerate(selected_multi):
                 values = y_data[col]
                 normalized = (values - values.min()) / (values.max() - values.min())
@@ -805,7 +816,7 @@ with tab2:
                     x=date_data, y=normalized,
                     mode='lines',
                     name=y_names_cn.get(col, col),
-                    line=dict(color=colors[idx % len(colors)], width=2.5)
+                    line=dict(color=colors_list[idx % len(colors_list)], width=2.5)
                 ))
             fig2.update_layout(
                 title='多指标归一化对比',
@@ -815,7 +826,8 @@ with tab2:
                 hovermode='x unified',
                 template='plotly_dark' if st.session_state.theme == 'dark' else 'plotly_white',
                 paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color=colors['text_color'])
             )
             st.plotly_chart(fig2, use_container_width=True)
     else:
@@ -840,7 +852,7 @@ with tab3:
         
         fig, ax = plt.subplots(figsize=(10, 5))
         bar_color = '#58a6ff' if st.session_state.theme == 'dark' else '#1a5276'
-        text_color = 'white' if st.session_state.theme == 'dark' else '#1a3a5c'
+        text_color = colors['text_color']
         
         bars = ax.barh(sorted_names, sorted_values, color=bar_color)
         ax.set_xlabel('Feature Importance', fontsize=12, fontweight='bold', color=text_color)
@@ -866,7 +878,7 @@ with tab3:
     sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0,
                fmt='.2f', square=True, linewidths=0.5, ax=ax,
                cbar_kws={'shrink': 0.8})
-    text_color = 'white' if st.session_state.theme == 'dark' else '#1a3a5c'
+    text_color = colors['text_color']
     ax.set_title('Feature Correlation Heatmap', fontsize=14, fontweight='bold', color=text_color)
     ax.set_facecolor(colors['plot_face'])
     fig.patch.set_facecolor(colors['plot_face'])
@@ -888,7 +900,7 @@ with tab4:
         mae = mean_absolute_error(y_test, y_pred)
         
         fig, ax = plt.subplots(figsize=(8, 6))
-        text_color = 'white' if st.session_state.theme == 'dark' else '#1a3a5c'
+        text_color = colors['text_color']
         ax.scatter(y_test, y_pred, alpha=0.6, color='#58a6ff', s=60)
         ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Ideal')
         ax.set_xlabel('True Value', fontsize=12, fontweight='bold', color=text_color)
@@ -928,7 +940,7 @@ with tab4:
                        results[target_eval]['xgb']['rmse']]
         
         fig2, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-        text_color = 'white' if st.session_state.theme == 'dark' else '#1a3a5c'
+        text_color = colors['text_color']
         
         # R²对比
         bars1 = ax1.bar(model_names, r2_values, color=['#58a6ff', '#f0883e', '#3fb950', '#f85149'])
@@ -984,7 +996,7 @@ with tab5:
                 )
                 
                 ax = plt.gca()
-                text_color = 'white' if st.session_state.theme == 'dark' else '#1a3a5c'
+                text_color = colors['text_color']
                 ax.tick_params(colors=text_color, labelsize=10)
                 ax.xaxis.label.set_color(text_color)
                 ax.yaxis.label.set_color(text_color)
@@ -1072,3 +1084,4 @@ with tab6:
 
 st.markdown("---")
 st.markdown(f"💧 **污水处理智能分析平台 v5.0** | 基于机器学习的多模型预测系统 | {'🌙 暗色模式' if st.session_state.theme == 'dark' else '☀️ 明亮模式'}")
+          
