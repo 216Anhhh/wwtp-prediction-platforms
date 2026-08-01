@@ -85,6 +85,7 @@ def get_theme_colors(theme):
             'select_bg': '#0d1117',
             'select_text': '#f0f6fc',
             'upload_bg': '#0d1117',
+            'font_color': '#f0f6fc',
         }
     else:
         return {
@@ -101,8 +102,8 @@ def get_theme_colors(theme):
             'card_bg': '#ffffff',
             'plot_bg': '#ffffff',
             'plot_face': '#ffffff',
-            'button_bg': '#f5e6c8',
-            'button_hover': '#e8d5b8',
+            'button_bg': '#e8d5b8',
+            'button_hover': '#dcc4a0',
             'button_text': '#1a1a2e',
             'tab_bg': '#ffffff',
             'tab_active': '#b8d4e3',
@@ -118,6 +119,7 @@ def get_theme_colors(theme):
             'select_bg': '#ffffff',
             'select_text': '#1a1a2e',
             'upload_bg': '#f5f7fa',
+            'font_color': '#1a1a2e',
         }
 
 colors = get_theme_colors(st.session_state.theme)
@@ -145,6 +147,44 @@ update_matplotlib_theme(st.session_state.theme, colors)
 
 # ============ 动态CSS ============
 def get_css(colors, theme):
+    # 明亮模式专用 - 强制文字颜色为深色
+    light_overrides = ""
+    if theme == 'light':
+        light_overrides = """
+        /* 强制所有文字为深色 */
+        .stMarkdown, .stMarkdown p, .stMarkdown div, .stMarkdown span,
+        .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
+        .stMarkdown label, .stMarkdown .label, .stMarkdown .value,
+        .result-card .label, .result-card .value,
+        .metric-card .label, .metric-card .value, .metric-card .sub,
+        div, p, span, label {
+            color: #1a1a2e !important;
+        }
+        /* 卡片内文字 */
+        .result-card, .result-card * {
+            color: #1a1a2e !important;
+        }
+        .metric-card, .metric-card * {
+            color: #1a1a2e !important;
+        }
+        /* 状态标签 */
+        .status-normal { color: #1a8a4a !important; font-weight: 700; }
+        .status-warning { color: #b87a0a !important; font-weight: 700; }
+        .status-danger { color: #b02a37 !important; font-weight: 700; }
+        /* 侧边栏文字 */
+        section[data-testid="stSidebar"] .stMarkdown,
+        section[data-testid="stSidebar"] .stMarkdown p,
+        section[data-testid="stSidebar"] h1,
+        section[data-testid="stSidebar"] h2,
+        section[data-testid="stSidebar"] h3,
+        section[data-testid="stSidebar"] h4 {
+            color: #1a1a2e !important;
+        }
+        section[data-testid="stSidebar"] .stMarkdown .label {
+            color: #3a4a5a !important;
+        }
+        """
+    
     if theme == 'dark':
         button_css = """
         .stButton button {
@@ -168,7 +208,7 @@ def get_css(colors, theme):
         button_css = """
         .stButton button {
             background: #e8d5b8;
-            color: #1a1a2e;
+            color: #1a1a2e !important;
             font-weight: 700;
             border: 2px solid #d4a574;
             border-radius: 8px;
@@ -182,16 +222,13 @@ def get_css(colors, theme):
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4);
         }
-        .stButton button:active {
-            box-shadow: 0 0 0 3px rgba(26, 82, 118, 0.3);
-        }
         """
     
     return f"""
     <style>
     .stApp {{ background-color: {colors['bg']}; }}
     
-    /* ===== 侧边栏 - 关键修复 ===== */
+    /* ===== 侧边栏 ===== */
     section[data-testid="stSidebar"] {{
         background-color: {colors['sidebar_bg']} !important;
         border-right: 1px solid {colors['border']} !important;
@@ -224,7 +261,7 @@ def get_css(colors, theme):
         color: {colors['text_secondary']} !important;
     }}
     
-    /* ===== 下拉选择框 - 关键修复（白底黑字） ===== */
+    /* ===== 下拉选择框 ===== */
     .stSelectbox div[data-baseweb="select"] div {{
         background-color: {colors['select_bg']} !important;
         color: {colors['select_text']} !important;
@@ -354,6 +391,9 @@ def get_css(colors, theme):
         border-color: {colors['border']} !important;
         color: {colors['text']} !important;
     }}
+    
+    /* ===== 明亮模式强制覆盖 ===== */
+    {light_overrides}
     </style>
     """
 
