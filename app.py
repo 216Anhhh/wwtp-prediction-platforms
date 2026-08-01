@@ -30,16 +30,7 @@ for font_name in chinese_fonts:
 if not font_set:
     plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial']
 
-# ===== 黑色主题图表配置 =====
-plt.rcParams['text.color'] = 'white'
-plt.rcParams['axes.labelcolor'] = 'white'
-plt.rcParams['xtick.color'] = 'white'
-plt.rcParams['ytick.color'] = 'white'
-plt.rcParams['axes.edgecolor'] = '#30363d'
-plt.rcParams['figure.facecolor'] = '#0d1117'
-plt.rcParams['axes.facecolor'] = '#0d1117'
 # ============================
-
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression, Lasso
@@ -56,75 +47,66 @@ st.set_page_config(
     layout="wide"
 )
 
-# ============ 自定义CSS ============
-st.markdown("""
-    <style>
-    .stApp { background-color: #0e1117; }
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #58a6ff;
-        text-align: center;
-        padding: 1rem 0 0.2rem 0;
-        letter-spacing: 2px;
-    }
-    .sub-header {
-        font-size: 1rem;
-        color: #8b949e;
-        text-align: center;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #30363d;
-        margin-bottom: 1.5rem;
-    }
-    .metric-card {
-        background: #161b22;
-        border-radius: 10px;
-        padding: 1rem;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.4);
-        border-left: 4px solid #58a6ff;
-        text-align: center;
-        margin: 0 4px;
-    }
-    .metric-card .label {
-        font-size: 0.75rem;
-        color: #8b949e;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .metric-card .value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #f0f6fc;
-        margin: 4px 0;
-    }
-    .metric-card .sub {
-        font-size: 0.7rem;
-        color: #8b949e;
-    }
-    .result-card {
-        background: #161b22;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-        text-align: center;
-        border-top: 4px solid #58a6ff;
-        height: 100%;
-    }
-    .result-card .label {
-        font-size: 0.8rem;
-        color: #8b949e;
-        font-weight: 500;
-    }
-    .result-card .value {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #f0f6fc;
-        margin: 6px 0;
-    }
+# ============ 初始化主题 ============
+if 'theme' not in st.session_state:
+    st.session_state.theme = 'dark'  # 'dark' or 'light'
+
+# ============ 主题配色 ============
+def get_theme_colors(theme):
+    if theme == 'dark':
+        return {
+            'bg': '#0e1117',
+            'bg2': '#161b22',
+            'text': '#f0f6fc',
+            'text_secondary': '#8b949e',
+            'border': '#30363d',
+            'primary': '#58a6ff',
+            'success': '#3fb950',
+            'warning': '#d29922',
+            'danger': '#f85149',
+            'card_bg': '#161b22',
+            'plot_bg': '#0d1117',
+            'plot_face': '#0d1117',
+            'button_bg': '#238636',
+            'button_hover': '#2ea043',
+            'button_text': 'white',
+            'tab_bg': '#161b22',
+            'tab_active': '#238636',
+            'tab_text': '#8b949e',
+            'tab_active_text': 'white',
+        }
+    else:
+        return {
+            'bg': '#f7f9fc',
+            'bg2': '#ffffff',
+            'text': '#1a3a5c',
+            'text_secondary': '#5a6a7a',
+            'border': '#dce3ed',
+            'primary': '#1a5276',
+            'success': '#1a8a4a',
+            'warning': '#b87a0a',
+            'danger': '#b02a37',
+            'card_bg': '#ffffff',
+            'plot_bg': '#ffffff',
+            'plot_face': '#ffffff',
+            'button_bg': '#5bc0de',
+            'button_hover': '#46b8da',
+            'button_text': '#1a3a5c',
+            'tab_bg': '#ffffff',
+            'tab_active': '#5bc0de',
+            'tab_text': '#5a6a7a',
+            'tab_active_text': '#1a3a5c',
+        }
+
+colors = get_theme_colors(st.session_state.theme)
+
+# ============ 动态CSS ============
+def get_css(colors, theme):
+    # 明亮模式按键颜色 - 每组不同
+    button_colors = """
     .stButton button {
-        background: #238636;
-        color: white;
+        background: #5bc0de;
+        color: #1a3a5c;
         font-weight: 700;
         border: none;
         border-radius: 8px;
@@ -132,36 +114,182 @@ st.markdown("""
         width: 100%;
         transition: all 0.3s ease;
         font-size: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     }
     .stButton button:hover {
-        background: #2ea043;
-        box-shadow: 0 4px 16px rgba(35, 134, 54, 0.4);
+        background: #46b8da;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(91, 192, 222, 0.4);
     }
-    .stTabs [data-baseweb="tab-list"] {
+    .stButton button:active, .stButton button:focus {
+        background: #2ea0c4;
+        box-shadow: 0 0 0 3px rgba(91, 192, 222, 0.5);
+    }
+    """
+    
+    if theme == 'dark':
+        button_css = """
+        .stButton button {
+            background: #238636;
+            color: white;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem 2rem;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        .stButton button:hover {
+            background: #2ea043;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(35, 134, 54, 0.4);
+        }
+        .stButton button:active, .stButton button:focus {
+            background: #2ea043;
+            box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.5);
+        }
+        """
+    else:
+        button_css = button_colors
+    
+    return f"""
+    <style>
+    .stApp {{ background-color: {colors['bg']}; }}
+    .main-header {{
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: {colors['primary']};
+        text-align: center;
+        padding: 1rem 0 0.2rem 0;
+        letter-spacing: 2px;
+    }}
+    .sub-header {{
+        font-size: 1rem;
+        color: {colors['text_secondary']};
+        text-align: center;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid {colors['border']};
+        margin-bottom: 1.5rem;
+    }}
+    .metric-card {{
+        background: {colors['card_bg']};
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,{0.4 if theme=='dark' else 0.08});
+        border-left: 4px solid {colors['primary']};
+        text-align: center;
+        margin: 0 4px;
+    }}
+    .metric-card .label {{
+        font-size: 0.75rem;
+        color: {colors['text_secondary']};
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }}
+    .metric-card .value {{
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: {colors['text']};
+        margin: 4px 0;
+    }}
+    .metric-card .sub {{
+        font-size: 0.7rem;
+        color: {colors['text_secondary']};
+    }}
+    .result-card {{
+        background: {colors['card_bg']};
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,{0.4 if theme=='dark' else 0.08});
+        text-align: center;
+        border-top: 4px solid {colors['primary']};
+        height: 100%;
+    }}
+    .result-card .label {{
+        font-size: 0.8rem;
+        color: {colors['text_secondary']};
+        font-weight: 500;
+    }}
+    .result-card .value {{
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: {colors['text']};
+        margin: 6px 0;
+    }}
+    {button_css}
+    .stTabs [data-baseweb="tab-list"] {{
         gap: 4px;
-        background: #161b22;
+        background: {colors['tab_bg']};
         padding: 6px;
         border-radius: 12px;
-        border: 1px solid #30363d;
-    }
-    .stTabs [data-baseweb="tab"] {
+        border: 1px solid {colors['border']};
+    }}
+    .stTabs [data-baseweb="tab"] {{
         border-radius: 8px;
         padding: 8px 20px;
         font-weight: 600;
-        color: #8b949e;
-    }
-    .stTabs [aria-selected="true"] {
-        background: #238636;
-        color: white;
-    }
-    .status-normal { color: #3fb950; font-weight: 700; }
-    .status-warning { color: #d29922; font-weight: 700; }
-    .status-danger { color: #f85149; font-weight: 700; }
+        color: {colors['tab_text']};
+        transition: all 0.3s ease;
+    }}
+    .stTabs [aria-selected="true"] {{
+        background: {colors['tab_active']};
+        color: {colors['tab_active_text']};
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }}
+    .status-normal {{ color: {colors['success']}; font-weight: 700; }}
+    .status-warning {{ color: {colors['warning']}; font-weight: 700; }}
+    .status-danger {{ color: {colors['danger']}; font-weight: 700; }}
+    .css-1d391kg {{ background-color: {colors['bg2']}; }}
+    
+    /* 明亮模式侧边栏主题切换按钮特殊样式 */
+    .theme-btn-dark {{
+        background: #1a1a2e !important;
+        color: white !important;
+    }}
+    .theme-btn-dark:hover {{
+        background: #2a2a4e !important;
+        box-shadow: 0 4px 12px rgba(26, 26, 46, 0.4) !important;
+    }}
+    .theme-btn-light {{
+        background: #f0e6d3 !important;
+        color: #1a3a5c !important;
+        border: 2px solid #d4a574 !important;
+    }}
+    .theme-btn-light:hover {{
+        background: #e8d5b8 !important;
+        box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4) !important;
+    }}
+    .theme-btn-active {{
+        box-shadow: 0 0 0 3px {colors['primary']} !important;
+        transform: scale(1.02);
+    }}
     </style>
-""", unsafe_allow_html=True)
+    """
 
-st.markdown('<div class="main-header">💧 污水处理智能分析平台</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">基于进水参数的污泥指标预测与SRT优化系统</div>', unsafe_allow_html=True)
+st.markdown(get_css(colors, st.session_state.theme), unsafe_allow_html=True)
+
+st.markdown(f'<div class="main-header">💧 污水处理智能分析平台</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="sub-header">基于进水参数的污泥指标预测与SRT优化系统</div>', unsafe_allow_html=True)
+
+# ============ 更新matplotlib颜色 ============
+if st.session_state.theme == 'dark':
+    plt.rcParams['text.color'] = 'white'
+    plt.rcParams['axes.labelcolor'] = 'white'
+    plt.rcParams['xtick.color'] = 'white'
+    plt.rcParams['ytick.color'] = 'white'
+    plt.rcParams['axes.edgecolor'] = '#30363d'
+    plt.rcParams['figure.facecolor'] = '#0d1117'
+    plt.rcParams['axes.facecolor'] = '#0d1117'
+else:
+    plt.rcParams['text.color'] = '#1a3a5c'
+    plt.rcParams['axes.labelcolor'] = '#1a3a5c'
+    plt.rcParams['xtick.color'] = '#1a3a5c'
+    plt.rcParams['ytick.color'] = '#1a3a5c'
+    plt.rcParams['axes.edgecolor'] = '#dce3ed'
+    plt.rcParams['figure.facecolor'] = '#ffffff'
+    plt.rcParams['axes.facecolor'] = '#ffffff'
 
 # ============ 初始化session_state ============
 if 'df_loaded' not in st.session_state:
@@ -339,6 +467,35 @@ with st.sidebar:
             st.session_state.pred_values[y_col] = pred_val
         st.rerun()
     
+    # ===== 主题切换 =====
+    st.markdown("---")
+    st.markdown("## 🎨 主题设置")
+    
+    # 主题切换按钮 - 带高亮效果
+    col1, col2 = st.columns(2)
+    
+    # 判断当前激活的主题
+    is_dark = st.session_state.theme == 'dark'
+    is_light = st.session_state.theme == 'light'
+    
+    with col1:
+        # 暗色模式按钮 - 当前激活时显示高亮边框
+        dark_style = "border: 2px solid #58a6ff; box-shadow: 0 0 15px rgba(88, 166, 255, 0.3);" if is_dark else ""
+        if st.button("🌙 暗色", use_container_width=True, key="theme_dark"):
+            st.session_state.theme = 'dark'
+            st.rerun()
+    
+    with col2:
+        # 明亮模式按钮 - 当前激活时显示高亮边框
+        light_style = "border: 2px solid #f0c27a; box-shadow: 0 0 15px rgba(240, 194, 122, 0.4);" if is_light else ""
+        if st.button("☀️ 明亮", use_container_width=True, key="theme_light"):
+            st.session_state.theme = 'light'
+            st.rerun()
+    
+    # 显示当前主题状态
+    current_theme = "🌙 暗色模式" if st.session_state.theme == 'dark' else "☀️ 明亮模式"
+    st.markdown(f"<p style='text-align:center;color:{colors['text_secondary']};font-size:0.8rem;font-weight:600;'>当前: {current_theme}</p>", unsafe_allow_html=True)
+    
     # ===== Excel导入功能 =====
     st.markdown("---")
     st.markdown("## 📁 导入数据")
@@ -407,7 +564,7 @@ if 'predicted' in st.session_state and st.session_state.predicted:
             <div class="label">🧪 预测有机质占比</div>
             <div class="value">{pred_fm:.2f}%</div>
             <div class="sub"><span class="{fm_class}">{fm_status}</span></div>
-            <div style="font-size:0.65rem;color:#8b949e;">正常: {FM_MIN}% ~ {FM_MAX}%</div>
+            <div style="font-size:0.65rem;color:{colors['text_secondary']};">正常: {FM_MIN}% ~ {FM_MAX}%</div>
         </div>
         """, unsafe_allow_html=True)
     with col2:
@@ -416,23 +573,23 @@ if 'predicted' in st.session_state and st.session_state.predicted:
             <div class="label">📊 预测SVI</div>
             <div class="value">{pred_svi:.2f}</div>
             <div class="sub"><span class="{svi_class}">{svi_status}</span></div>
-            <div style="font-size:0.65rem;color:#8b949e;">正常: {SVI_MIN} ~ {SVI_MAX}</div>
+            <div style="font-size:0.65rem;color:{colors['text_secondary']};">正常: {SVI_MIN} ~ {SVI_MAX}</div>
         </div>
         """, unsafe_allow_html=True)
     with col3:
         st.markdown(f"""
         <div class="metric-card" style="border-left-color:#3fb950;">
             <div class="label">⏳ 模型预测SRT</div>
-            <div class="value">{pred_srt:.2f}<span style="font-size:0.9rem;color:#8b949e;"> 天</span></div>
+            <div class="value">{pred_srt:.2f}<span style="font-size:0.9rem;color:{colors['text_secondary']};"> 天</span></div>
             <div class="sub"><span class="{srt_class}">{srt_status}</span></div>
-            <div style="font-size:0.65rem;color:#8b949e;">正常: {SRT_MIN} ~ {SRT_MAX} 天</div>
+            <div style="font-size:0.65rem;color:{colors['text_secondary']};">正常: {SRT_MIN} ~ {SRT_MAX} 天</div>
         </div>
         """, unsafe_allow_html=True)
     with col4:
         st.markdown(f"""
         <div class="metric-card" style="border-left-color:#d29922;">
             <div class="label">🌟 推荐最优污泥龄</div>
-            <div class="value" style="color:#d29922;">{opt_srt:.2f}<span style="font-size:0.9rem;color:#8b949e;"> 天</span></div>
+            <div class="value" style="color:#d29922;">{opt_srt:.2f}<span style="font-size:0.9rem;color:{colors['text_secondary']};"> 天</span></div>
             <div class="sub">基于F/M优化 (5~15天)</div>
         </div>
         """, unsafe_allow_html=True)
@@ -475,10 +632,10 @@ else:
     col1, col2, col3, col4 = st.columns(4)
     for col in [col1, col2, col3, col4]:
         with col:
-            st.markdown("""
+            st.markdown(f"""
             <div class="metric-card" style="opacity:0.5;">
                 <div class="label">等待预测...</div>
-                <div class="value" style="font-size:1rem;color:#8b949e;">点击"开始预测"</div>
+                <div class="value" style="font-size:1rem;color:{colors['text_secondary']};">点击"开始预测"</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -502,7 +659,7 @@ with tab1:
                 <div class="label">🧪 有机质占比 (F/M)</div>
                 <div class="value">{pred_fm:.2f}%</div>
                 <div><span class="{fm_class}">{fm_status}</span></div>
-                <div style="font-size:0.75rem;color:#8b949e;margin-top:8px;">
+                <div style="font-size:0.75rem;color:{colors['text_secondary']};margin-top:8px;">
                     正常范围: {FM_MIN}% ~ {FM_MAX}%
                 </div>
             </div>
@@ -514,7 +671,7 @@ with tab1:
                 <div class="label">📊 SVI (污泥体积指数)</div>
                 <div class="value">{pred_svi:.2f}</div>
                 <div><span class="{svi_class}">{svi_status}</span></div>
-                <div style="font-size:0.75rem;color:#8b949e;margin-top:8px;">
+                <div style="font-size:0.75rem;color:{colors['text_secondary']};margin-top:8px;">
                     正常范围: {SVI_MIN} ~ {SVI_MAX}
                 </div>
             </div>
@@ -526,7 +683,7 @@ with tab1:
                 <div class="label">⏳ 污泥龄 (SRT)</div>
                 <div class="value">{pred_srt:.2f} 天</div>
                 <div><span class="{srt_class}">{srt_status}</span></div>
-                <div style="font-size:0.75rem;color:#8b949e;margin-top:8px;">
+                <div style="font-size:0.75rem;color:{colors['text_secondary']};margin-top:8px;">
                     正常范围: {SRT_MIN} ~ {SRT_MAX} 天
                 </div>
             </div>
@@ -543,7 +700,7 @@ with tab1:
         fig.add_trace(go.Scatter(
             x=[pred_srt], y=[pred_fm],
             mode='markers', name='预测值',
-            marker=dict(size=22, color='#f85149', symbol='star', line=dict(width=2, color='white'))
+            marker=dict(size=22, color='#f85149', symbol='star', line=dict(width=2, color='white' if st.session_state.theme == 'dark' else '#1a3a5c'))
         ))
         fig.update_layout(
             title='SRT vs F/M 关系图',
@@ -551,7 +708,7 @@ with tab1:
             yaxis_title='F/M (%)',
             height=400,
             hovermode='closest',
-            template='plotly_dark',
+            template='plotly_dark' if st.session_state.theme == 'dark' else 'plotly_white',
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)'
         )
@@ -618,7 +775,7 @@ with tab2:
                 yaxis_title=title,
                 height=400,
                 hovermode='x unified',
-                template='plotly_dark',
+                template='plotly_dark' if st.session_state.theme == 'dark' else 'plotly_white',
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
@@ -656,7 +813,7 @@ with tab2:
                 yaxis_title='归一化值',
                 height=300,
                 hovermode='x unified',
-                template='plotly_dark',
+                template='plotly_dark' if st.session_state.theme == 'dark' else 'plotly_white',
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
@@ -682,14 +839,17 @@ with tab3:
         sorted_values = importance[sorted_idx]
         
         fig, ax = plt.subplots(figsize=(10, 5))
-        bars = ax.barh(sorted_names, sorted_values, color='#58a6ff')
-        ax.set_xlabel('Feature Importance', fontsize=12, fontweight='bold', color='white')
-        ax.set_title(f'{model_type} - {y_names_en.get(target, target)} Feature Importance', fontsize=14, fontweight='bold', color='white')
+        bar_color = '#58a6ff' if st.session_state.theme == 'dark' else '#1a5276'
+        text_color = 'white' if st.session_state.theme == 'dark' else '#1a3a5c'
+        
+        bars = ax.barh(sorted_names, sorted_values, color=bar_color)
+        ax.set_xlabel('Feature Importance', fontsize=12, fontweight='bold', color=text_color)
+        ax.set_title(f'{model_type} - {y_names_en.get(target, target)} Feature Importance', fontsize=14, fontweight='bold', color=text_color)
         ax.invert_yaxis()
-        ax.set_facecolor('#0d1117')
-        fig.patch.set_facecolor('#0d1117')
+        ax.set_facecolor(colors['plot_face'])
+        fig.patch.set_facecolor(colors['plot_face'])
         for i, v in enumerate(sorted_values):
-            ax.text(v + 0.005, i, f'{v:.3f}', va='center', color='white', fontsize=9, fontweight='bold')
+            ax.text(v + 0.005, i, f'{v:.3f}', va='center', color=text_color, fontsize=9, fontweight='bold')
         plt.tight_layout()
         st.pyplot(fig)
     
@@ -706,9 +866,10 @@ with tab3:
     sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0,
                fmt='.2f', square=True, linewidths=0.5, ax=ax,
                cbar_kws={'shrink': 0.8})
-    ax.set_title('Feature Correlation Heatmap', fontsize=14, fontweight='bold', color='white')
-    ax.set_facecolor('#0d1117')
-    fig.patch.set_facecolor('#0d1117')
+    text_color = 'white' if st.session_state.theme == 'dark' else '#1a3a5c'
+    ax.set_title('Feature Correlation Heatmap', fontsize=14, fontweight='bold', color=text_color)
+    ax.set_facecolor(colors['plot_face'])
+    fig.patch.set_facecolor(colors['plot_face'])
     plt.tight_layout()
     st.pyplot(fig)
 
@@ -727,18 +888,18 @@ with tab4:
         mae = mean_absolute_error(y_test, y_pred)
         
         fig, ax = plt.subplots(figsize=(8, 6))
+        text_color = 'white' if st.session_state.theme == 'dark' else '#1a3a5c'
         ax.scatter(y_test, y_pred, alpha=0.6, color='#58a6ff', s=60)
         ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Ideal')
-        ax.set_xlabel('True Value', fontsize=12, fontweight='bold', color='white')
-        ax.set_ylabel('Predicted Value', fontsize=12, fontweight='bold', color='white')
-        ax.set_title(f'{y_names_en.get(target_eval, target_eval)} - R² = {r2:.4f}', fontsize=14, fontweight='bold', color='white')
-        ax.legend(loc='upper left', facecolor='#0d1117', edgecolor='#30363d', labelcolor='white')
-        ax.set_facecolor('#0d1117')
-        fig.patch.set_facecolor('#0d1117')
+        ax.set_xlabel('True Value', fontsize=12, fontweight='bold', color=text_color)
+        ax.set_ylabel('Predicted Value', fontsize=12, fontweight='bold', color=text_color)
+        ax.set_title(f'{y_names_en.get(target_eval, target_eval)} - R² = {r2:.4f}', fontsize=14, fontweight='bold', color=text_color)
+        ax.legend(loc='upper left', facecolor=colors['plot_face'], edgecolor=colors['border'], labelcolor=text_color)
+        ax.set_facecolor(colors['plot_face'])
+        fig.patch.set_facecolor(colors['plot_face'])
         plt.tight_layout()
         st.pyplot(fig)
         
-        # ===== 模型评价指标 =====
         st.markdown("---")
         st.markdown("### 📊 模型评价指标")
         st.markdown("R²、MSE、RMSE、MAE 综合评价模型性能")
@@ -753,7 +914,6 @@ with tab4:
         with col4:
             st.metric("MAE", f"{mae:.4f}", help="平均绝对误差，越小越好")
         
-        # ===== 各模型对比 =====
         st.markdown("---")
         st.markdown("### 📊 各模型性能对比")
         
@@ -768,31 +928,32 @@ with tab4:
                        results[target_eval]['xgb']['rmse']]
         
         fig2, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+        text_color = 'white' if st.session_state.theme == 'dark' else '#1a3a5c'
         
         # R²对比
         bars1 = ax1.bar(model_names, r2_values, color=['#58a6ff', '#f0883e', '#3fb950', '#f85149'])
-        ax1.set_ylabel('R² Score', fontsize=12, color='white')
-        ax1.set_title('R² Comparison', fontsize=14, fontweight='bold', color='white')
+        ax1.set_ylabel('R² Score', fontsize=12, color=text_color)
+        ax1.set_title('R² Comparison', fontsize=14, fontweight='bold', color=text_color)
         ax1.set_ylim(0, 1.05)
-        ax1.set_facecolor('#0d1117')
-        fig2.patch.set_facecolor('#0d1117')
+        ax1.set_facecolor(colors['plot_face'])
+        fig2.patch.set_facecolor(colors['plot_face'])
         for bar, val in zip(bars1, r2_values):
             ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                    f'{val:.3f}', ha='center', va='bottom', color='white', fontsize=9)
+                    f'{val:.3f}', ha='center', va='bottom', color=text_color, fontsize=9)
         
         # RMSE对比
         bars2 = ax2.bar(model_names, rmse_values, color=['#58a6ff', '#f0883e', '#3fb950', '#f85149'])
-        ax2.set_ylabel('RMSE', fontsize=12, color='white')
-        ax2.set_title('RMSE Comparison', fontsize=14, fontweight='bold', color='white')
-        ax2.set_facecolor('#0d1117')
+        ax2.set_ylabel('RMSE', fontsize=12, color=text_color)
+        ax2.set_title('RMSE Comparison', fontsize=14, fontweight='bold', color=text_color)
+        ax2.set_facecolor(colors['plot_face'])
         for bar, val in zip(bars2, rmse_values):
             ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                    f'{val:.3f}', ha='center', va='bottom', color='white', fontsize=9)
+                    f'{val:.3f}', ha='center', va='bottom', color=text_color, fontsize=9)
         
         plt.tight_layout()
         st.pyplot(fig2)
 
-# ===== Tab 5: SHAP解释（优化颜色版） =====
+# ===== Tab 5: SHAP解释 =====
 with tab5:
     st.markdown("### 🔍 SHAP 模型解释")
     st.markdown("SHAP值解释每个特征对预测结果的贡献")
@@ -808,15 +969,11 @@ with tab5:
                 shap_values = explainer.shap_values(X_train)
                 feature_names = [x_names_en.get(col, col) for col in available_X]
                 
-                # ===== SHAP蜂群图 - 优化颜色 =====
                 st.markdown("#### 📊 SHAP 蜂群图")
                 fig, ax = plt.subplots(figsize=(10, 5))
+                ax.set_facecolor(colors['plot_face'])
+                fig.patch.set_facecolor(colors['plot_face'])
                 
-                # 设置背景为深色
-                ax.set_facecolor('#0d1117')
-                fig.patch.set_facecolor('#0d1117')
-                
-                # 生成SHAP图，使用高对比度颜色
                 shap.summary_plot(
                     shap_values, 
                     X_train, 
@@ -826,26 +983,22 @@ with tab5:
                     cmap=plt.get_cmap('coolwarm')
                 )
                 
-                # 手动调整轴标签颜色为白色
                 ax = plt.gca()
-                ax.tick_params(colors='white', labelsize=10)
-                ax.xaxis.label.set_color('white')
-                ax.yaxis.label.set_color('white')
-                ax.title.set_color('white')
-                
-                # 确保所有文本为白色
+                text_color = 'white' if st.session_state.theme == 'dark' else '#1a3a5c'
+                ax.tick_params(colors=text_color, labelsize=10)
+                ax.xaxis.label.set_color(text_color)
+                ax.yaxis.label.set_color(text_color)
+                ax.title.set_color(text_color)
                 for text in ax.texts:
-                    text.set_color('white')
+                    text.set_color(text_color)
                 
                 plt.tight_layout()
                 st.pyplot(fig)
                 
-                # ===== SHAP特征重要性条形图 =====
                 st.markdown("#### 📊 SHAP 特征重要性")
                 fig2, ax2 = plt.subplots(figsize=(10, 5))
-                
-                ax2.set_facecolor('#0d1117')
-                fig2.patch.set_facecolor('#0d1117')
+                ax2.set_facecolor(colors['plot_face'])
+                fig2.patch.set_facecolor(colors['plot_face'])
                 
                 shap.summary_plot(
                     shap_values, 
@@ -853,22 +1006,20 @@ with tab5:
                     feature_names=feature_names, 
                     plot_type="bar",
                     show=False,
-                    color='#58a6ff'
+                    color='#58a6ff' if st.session_state.theme == 'dark' else '#1a5276'
                 )
                 
                 ax2 = plt.gca()
-                ax2.tick_params(colors='white', labelsize=10)
-                ax2.xaxis.label.set_color('white')
-                ax2.yaxis.label.set_color('white')
-                ax2.title.set_color('white')
-                
+                ax2.tick_params(colors=text_color, labelsize=10)
+                ax2.xaxis.label.set_color(text_color)
+                ax2.yaxis.label.set_color(text_color)
+                ax2.title.set_color(text_color)
                 for patch in ax2.patches:
-                    patch.set_color('#58a6ff')
+                    patch.set_color('#58a6ff' if st.session_state.theme == 'dark' else '#1a5276')
                 
                 plt.tight_layout()
                 st.pyplot(fig2)
                 
-                # ===== 单个预测解释 =====
                 st.markdown("---")
                 st.markdown("#### 🎯 当前输入的SHAP解释")
                 
@@ -893,12 +1044,12 @@ with tab5:
                 base_val = explainer.expected_value
                 
                 st.markdown(f"""
-                <div style="background:#161b22;padding:1rem;border-radius:10px;border:1px solid #30363d;margin-top:1rem;">
-                    <b style="color:#58a6ff;">预测 {y_names_cn.get(shap_target, shap_target)}:</b> 
-                    <span style="color:#f0f6fc;font-size:1.2rem;font-weight:bold;">{pred_val:.3f}</span>
+                <div style="background:{colors['card_bg']};padding:1rem;border-radius:10px;border:1px solid {colors['border']};margin-top:1rem;">
+                    <b style="color:{colors['primary']};">预测 {y_names_cn.get(shap_target, shap_target)}:</b> 
+                    <span style="color:{colors['text']};font-size:1.2rem;font-weight:bold;">{pred_val:.3f}</span>
                     <br>
-                    <b style="color:#8b949e;">基准值:</b> 
-                    <span style="color:#f0f6fc;">{base_val:.3f}</span>
+                    <b style="color:{colors['text_secondary']};">基准值:</b> 
+                    <span style="color:{colors['text']};">{base_val:.3f}</span>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -920,4 +1071,4 @@ with tab6:
         st.dataframe(y_data.describe())
 
 st.markdown("---")
-st.markdown("💧 **污水处理智能分析平台 v5.0** | 基于机器学习的多模型预测系统")
+st.markdown(f"💧 **污水处理智能分析平台 v5.0** | 基于机器学习的多模型预测系统 | {'🌙 暗色模式' if st.session_state.theme == 'dark' else '☀️ 明亮模式'}")
