@@ -80,12 +80,13 @@ def get_theme_colors(theme):
             'label_color': '#ffffff',
             'title_color': '#ffffff',
             'text_color': '#ffffff',
-            'input_bg': '#0d1117',
+            'input_bg': '#1a1a2e',
             'input_text': '#f0f6fc',
-            'select_bg': '#0d1117',
+            'select_bg': '#1a1a2e',
             'select_text': '#f0f6fc',
             'upload_bg': '#0d1117',
             'font_color': '#f0f6fc',
+            'step_color': '#3a5a7a',
         }
     else:
         return {
@@ -114,12 +115,13 @@ def get_theme_colors(theme):
             'label_color': '#1a1a2e',
             'title_color': '#1a1a2e',
             'text_color': '#1a1a2e',
-            'input_bg': '#f5f7fa',
+            'input_bg': '#f0f2f6',
             'input_text': '#1a1a2e',
             'select_bg': '#ffffff',
             'select_text': '#1a1a2e',
             'upload_bg': '#f5f7fa',
             'font_color': '#1a1a2e',
+            'step_color': '#b8c4d0',
         }
 
 colors = get_theme_colors(st.session_state.theme)
@@ -147,7 +149,6 @@ update_matplotlib_theme(st.session_state.theme, colors)
 
 # ============ 动态CSS ============
 def get_css(colors, theme):
-    # 明亮模式专用 - 强制文字颜色为深色
     light_overrides = ""
     if theme == 'light':
         light_overrides = """
@@ -160,18 +161,15 @@ def get_css(colors, theme):
         div, p, span, label {
             color: #1a1a2e !important;
         }
-        /* 卡片内文字 */
         .result-card, .result-card * {
             color: #1a1a2e !important;
         }
         .metric-card, .metric-card * {
             color: #1a1a2e !important;
         }
-        /* 状态标签 */
         .status-normal { color: #1a8a4a !important; font-weight: 700; }
         .status-warning { color: #b87a0a !important; font-weight: 700; }
         .status-danger { color: #b02a37 !important; font-weight: 700; }
-        /* 侧边栏文字 */
         section[data-testid="stSidebar"] .stMarkdown,
         section[data-testid="stSidebar"] .stMarkdown p,
         section[data-testid="stSidebar"] h1,
@@ -182,6 +180,26 @@ def get_css(colors, theme):
         }
         section[data-testid="stSidebar"] .stMarkdown .label {
             color: #3a4a5a !important;
+        }
+        /* 下拉选择框 - 浅背景深文字 */
+        .stSelectbox div[data-baseweb="select"] div {
+            background-color: #ffffff !important;
+            color: #1a1a2e !important;
+        }
+        .stSelectbox ul {
+            background-color: #ffffff !important;
+        }
+        .stSelectbox li {
+            color: #1a1a2e !important;
+            background-color: #ffffff !important;
+        }
+        .stSelectbox li:hover {
+            background-color: #e8ecf1 !important;
+        }
+        /* 输入框 */
+        .stNumberInput input, .stTextInput input {
+            background-color: #f0f2f6 !important;
+            color: #1a1a2e !important;
         }
         """
     
@@ -259,6 +277,19 @@ def get_css(colors, theme):
     section[data-testid="stSidebar"] .stTextInput label,
     section[data-testid="stSidebar"] .stSelectbox label {{
         color: {colors['text_secondary']} !important;
+    }}
+    
+    /* ===== 输入框加减号按钮 - 浅色 ===== */
+    .stNumberInput button {{
+        background-color: {colors['step_color']} !important;
+        color: {colors['text']} !important;
+        border: none !important;
+        border-radius: 4px !important;
+        opacity: 0.7 !important;
+    }}
+    .stNumberInput button:hover {{
+        background-color: {colors['step_color']} !important;
+        opacity: 1 !important;
     }}
     
     /* ===== 下拉选择框 ===== */
