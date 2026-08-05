@@ -47,81 +47,55 @@ st.set_page_config(
     layout="wide"
 )
 
-# ============ 初始化主题 ============
+# ============ 初始化session_state ============
+if 'df_loaded' not in st.session_state:
+    st.session_state.df_loaded = None
+if 'data_source' not in st.session_state:
+    st.session_state.data_source = 'default'
+if 'predicted' not in st.session_state:
+    st.session_state.predicted = False
+if 'pred_values' not in st.session_state:
+    st.session_state.pred_values = {}
+if 'input_values' not in st.session_state:
+    st.session_state.input_values = {}
+if 'models' not in st.session_state:
+    st.session_state.models = None
+if 'results' not in st.session_state:
+    st.session_state.results = None
+if 'model_trained' not in st.session_state:
+    st.session_state.model_trained = False
 if 'theme' not in st.session_state:
     st.session_state.theme = 'dark'
+if 'shap_generated' not in st.session_state:
+    st.session_state.shap_generated = False
+if 'shap_values' not in st.session_state:
+    st.session_state.shap_values = None
+if 'shap_explainer' not in st.session_state:
+    st.session_state.shap_explainer = None
 
 # ============ 主题配色 ============
 def get_theme_colors(theme):
     if theme == 'dark':
         return {
-            'bg': '#0e1117',
-            'bg2': '#0d1117',
-            'sidebar_bg': '#0d1117',
-            'text': '#f0f6fc',
-            'text_secondary': '#8b949e',
-            'border': '#30363d',
-            'primary': '#58a6ff',
-            'success': '#3fb950',
-            'warning': '#d29922',
-            'danger': '#f85149',
-            'card_bg': '#161b22',
-            'plot_bg': '#0d1117',
-            'plot_face': '#0d1117',
-            'button_bg': '#238636',
-            'button_hover': '#2ea043',
-            'button_text': '#ffffff',
-            'tab_bg': '#161b22',
-            'tab_active': '#238636',
-            'tab_text': '#8b949e',
-            'tab_active_text': '#ffffff',
-            'axis_color': '#ffffff',
-            'tick_color': '#ffffff',
-            'label_color': '#ffffff',
-            'title_color': '#ffffff',
-            'text_color': '#ffffff',
-            'input_bg': '#1a1a2e',
-            'input_text': '#f0f6fc',
-            'select_bg': '#1a1a2e',
-            'select_text': '#f0f6fc',
-            'upload_bg': '#0d1117',
-            'font_color': '#f0f6fc',
-            'step_color': '#3a5a7a',
+            'bg': '#0e1117', 'bg2': '#0d1117', 'sidebar_bg': '#0d1117',
+            'text': '#f0f6fc', 'text_secondary': '#8b949e', 'border': '#30363d',
+            'primary': '#58a6ff', 'success': '#3fb950', 'warning': '#d29922', 'danger': '#f85149',
+            'card_bg': '#161b22', 'plot_bg': '#0d1117', 'plot_face': '#0d1117',
+            'button_bg': '#238636', 'button_hover': '#2ea043', 'button_text': '#ffffff',
+            'tab_bg': '#161b22', 'tab_active': '#238636', 'tab_text': '#8b949e', 'tab_active_text': '#ffffff',
+            'text_color': '#ffffff', 'input_bg': '#1a1a2e', 'input_text': '#f0f6fc',
+            'select_bg': '#1a1a2e', 'select_text': '#f0f6fc', 'step_color': '#3a5a7a',
         }
     else:
         return {
-            'bg': '#f5f7fa',
-            'bg2': '#ffffff',
-            'sidebar_bg': '#e8ecf1',
-            'text': '#1a1a2e',
-            'text_secondary': '#3a4a5a',
-            'border': '#d0d7de',
-            'primary': '#1a5276',
-            'success': '#1a8a4a',
-            'warning': '#b87a0a',
-            'danger': '#b02a37',
-            'card_bg': '#ffffff',
-            'plot_bg': '#ffffff',
-            'plot_face': '#ffffff',
-            'button_bg': '#e8d5b8',
-            'button_hover': '#dcc4a0',
-            'button_text': '#1a1a2e',
-            'tab_bg': '#ffffff',
-            'tab_active': '#b8d4e3',
-            'tab_text': '#4a5a6a',
-            'tab_active_text': '#1a1a2e',
-            'axis_color': '#1a1a2e',
-            'tick_color': '#1a1a2e',
-            'label_color': '#1a1a2e',
-            'title_color': '#1a1a2e',
-            'text_color': '#1a1a2e',
-            'input_bg': '#f0f2f6',
-            'input_text': '#1a1a2e',
-            'select_bg': '#ffffff',
-            'select_text': '#1a1a2e',
-            'upload_bg': '#f5f7fa',
-            'font_color': '#1a1a2e',
-            'step_color': '#b8c4d0',
+            'bg': '#f5f7fa', 'bg2': '#ffffff', 'sidebar_bg': '#e8ecf1',
+            'text': '#1a1a2e', 'text_secondary': '#3a4a5a', 'border': '#d0d7de',
+            'primary': '#1a5276', 'success': '#1a8a4a', 'warning': '#b87a0a', 'danger': '#b02a37',
+            'card_bg': '#ffffff', 'plot_bg': '#ffffff', 'plot_face': '#ffffff',
+            'button_bg': '#e8d5b8', 'button_hover': '#dcc4a0', 'button_text': '#1a1a2e',
+            'tab_bg': '#ffffff', 'tab_active': '#b8d4e3', 'tab_text': '#4a5a6a', 'tab_active_text': '#1a1a2e',
+            'text_color': '#1a1a2e', 'input_bg': '#f0f2f6', 'input_text': '#1a1a2e',
+            'select_bg': '#ffffff', 'select_text': '#1a1a2e', 'step_color': '#b8c4d0',
         }
 
 colors = get_theme_colors(st.session_state.theme)
@@ -152,51 +126,30 @@ def get_css(colors, theme):
     light_overrides = ""
     if theme == 'light':
         light_overrides = """
-        /* 强制所有文字为深色 */
         .stMarkdown, .stMarkdown p, .stMarkdown div, .stMarkdown span,
         .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
         .stMarkdown label, .stMarkdown .label, .stMarkdown .value,
         .result-card .label, .result-card .value,
         .metric-card .label, .metric-card .value, .metric-card .sub,
-        div, p, span, label {
-            color: #1a1a2e !important;
-        }
-        .result-card, .result-card * {
-            color: #1a1a2e !important;
-        }
-        .metric-card, .metric-card * {
-            color: #1a1a2e !important;
-        }
+        div, p, span, label { color: #1a1a2e !important; }
+        .result-card, .result-card * { color: #1a1a2e !important; }
+        .metric-card, .metric-card * { color: #1a1a2e !important; }
         .status-normal { color: #1a8a4a !important; font-weight: 700; }
         .status-warning { color: #b87a0a !important; font-weight: 700; }
         .status-danger { color: #b02a37 !important; font-weight: 700; }
         section[data-testid="stSidebar"] .stMarkdown,
         section[data-testid="stSidebar"] .stMarkdown p,
-        section[data-testid="stSidebar"] h1,
-        section[data-testid="stSidebar"] h2,
-        section[data-testid="stSidebar"] h3,
-        section[data-testid="stSidebar"] h4 {
+        section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2,
+        section[data-testid="stSidebar"] h3, section[data-testid="stSidebar"] h4 {
             color: #1a1a2e !important;
         }
-        section[data-testid="stSidebar"] .stMarkdown .label {
-            color: #3a4a5a !important;
-        }
-        /* 下拉选择框 - 浅背景深文字 */
         .stSelectbox div[data-baseweb="select"] div {
             background-color: #ffffff !important;
             color: #1a1a2e !important;
         }
-        .stSelectbox ul {
-            background-color: #ffffff !important;
-        }
-        .stSelectbox li {
-            color: #1a1a2e !important;
-            background-color: #ffffff !important;
-        }
-        .stSelectbox li:hover {
-            background-color: #e8ecf1 !important;
-        }
-        /* 输入框 */
+        .stSelectbox ul { background-color: #ffffff !important; }
+        .stSelectbox li { color: #1a1a2e !important; background-color: #ffffff !important; }
+        .stSelectbox li:hover { background-color: #e8ecf1 !important; }
         .stNumberInput input, .stTextInput input {
             background-color: #f0f2f6 !important;
             color: #1a1a2e !important;
@@ -206,38 +159,24 @@ def get_css(colors, theme):
     if theme == 'dark':
         button_css = """
         .stButton button {
-            background: #238636;
-            color: #ffffff;
-            font-weight: 700;
-            border: none;
-            border-radius: 8px;
-            padding: 0.6rem 2rem;
-            width: 100%;
-            transition: all 0.3s ease;
-            font-size: 1rem;
+            background: #238636; color: #ffffff; font-weight: 700; border: none;
+            border-radius: 8px; padding: 0.6rem 2rem; width: 100%;
+            transition: all 0.3s ease; font-size: 1rem;
         }
         .stButton button:hover {
-            background: #2ea043;
-            transform: translateY(-2px);
+            background: #2ea043; transform: translateY(-2px);
             box-shadow: 0 4px 16px rgba(35, 134, 54, 0.4);
         }
         """
     else:
         button_css = """
         .stButton button {
-            background: #e8d5b8;
-            color: #1a1a2e !important;
-            font-weight: 700;
-            border: 2px solid #d4a574;
-            border-radius: 8px;
-            padding: 0.6rem 2rem;
-            width: 100%;
-            transition: all 0.3s ease;
-            font-size: 1rem;
+            background: #e8d5b8; color: #1a1a2e !important; font-weight: 700;
+            border: 2px solid #d4a574; border-radius: 8px; padding: 0.6rem 2rem;
+            width: 100%; transition: all 0.3s ease; font-size: 1rem;
         }
         .stButton button:hover {
-            background: #dcc4a0;
-            transform: translateY(-2px);
+            background: #dcc4a0; transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4);
         }
         """
@@ -245,26 +184,16 @@ def get_css(colors, theme):
     return f"""
     <style>
     .stApp {{ background-color: {colors['bg']}; }}
-    
-    /* ===== 侧边栏 ===== */
     section[data-testid="stSidebar"] {{
         background-color: {colors['sidebar_bg']} !important;
         border-right: 1px solid {colors['border']} !important;
     }}
-    section[data-testid="stSidebar"] .stMarkdown {{
+    section[data-testid="stSidebar"] .stMarkdown {{ color: {colors['text']} !important; }}
+    section[data-testid="stSidebar"] .stMarkdown p {{ color: {colors['text']} !important; }}
+    section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3, section[data-testid="stSidebar"] h4 {{
         color: {colors['text']} !important;
     }}
-    section[data-testid="stSidebar"] .stMarkdown p {{
-        color: {colors['text']} !important;
-    }}
-    section[data-testid="stSidebar"] h1, 
-    section[data-testid="stSidebar"] h2, 
-    section[data-testid="stSidebar"] h3, 
-    section[data-testid="stSidebar"] h4 {{
-        color: {colors['text']} !important;
-    }}
-    
-    /* ===== 侧边栏输入框 ===== */
     section[data-testid="stSidebar"] .stNumberInput input,
     section[data-testid="stSidebar"] .stTextInput input,
     section[data-testid="stSidebar"] .stSelectbox select,
@@ -278,8 +207,6 @@ def get_css(colors, theme):
     section[data-testid="stSidebar"] .stSelectbox label {{
         color: {colors['text_secondary']} !important;
     }}
-    
-    /* ===== 输入框加减号按钮 - 浅色 ===== */
     .stNumberInput button {{
         background-color: {colors['step_color']} !important;
         color: {colors['text']} !important;
@@ -291,139 +218,60 @@ def get_css(colors, theme):
         background-color: {colors['step_color']} !important;
         opacity: 1 !important;
     }}
-    
-    /* ===== 下拉选择框 ===== */
     .stSelectbox div[data-baseweb="select"] div {{
         background-color: {colors['select_bg']} !important;
         color: {colors['select_text']} !important;
     }}
-    .stSelectbox ul {{
-        background-color: {colors['select_bg']} !important;
-    }}
-    .stSelectbox li {{
-        color: {colors['select_text']} !important;
-        background-color: {colors['select_bg']} !important;
-    }}
-    .stSelectbox li:hover {{
-        background-color: {colors['button_hover']} !important;
-    }}
-    
-    /* ===== 文件上传器 ===== */
-    .stFileUploader {{
-        background-color: {colors['upload_bg']} !important;
-        border: 1px dashed {colors['border']} !important;
-        border-radius: 8px !important;
-    }}
-    .stFileUploader label {{
-        color: {colors['text_secondary']} !important;
-    }}
-    
-    /* ===== 主区域标题 ===== */
+    .stSelectbox ul {{ background-color: {colors['select_bg']} !important; }}
+    .stSelectbox li {{ color: {colors['select_text']} !important; background-color: {colors['select_bg']} !important; }}
+    .stSelectbox li:hover {{ background-color: {colors['button_hover']} !important; }}
     .main-header {{
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: {colors['primary']};
-        text-align: center;
-        padding: 1rem 0 0.2rem 0;
-        letter-spacing: 2px;
+        font-size: 2.5rem; font-weight: 700; color: {colors['primary']};
+        text-align: center; padding: 1rem 0 0.2rem 0; letter-spacing: 2px;
     }}
     .sub-header {{
-        font-size: 1rem;
-        color: {colors['text_secondary']};
-        text-align: center;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid {colors['border']};
+        font-size: 1rem; color: {colors['text_secondary']}; text-align: center;
+        padding-bottom: 1rem; border-bottom: 1px solid {colors['border']};
         margin-bottom: 1.5rem;
     }}
-    
-    /* ===== 卡片 ===== */
     .metric-card {{
-        background: {colors['card_bg']};
-        border-radius: 10px;
-        padding: 1rem;
+        background: {colors['card_bg']}; border-radius: 10px; padding: 1rem;
         box-shadow: 0 1px 4px rgba(0,0,0,{0.4 if theme=='dark' else 0.08});
-        border-left: 4px solid {colors['primary']};
-        text-align: center;
-        margin: 0 4px;
+        border-left: 4px solid {colors['primary']}; text-align: center; margin: 0 4px;
     }}
     .metric-card .label {{
-        font-size: 0.75rem;
-        color: {colors['text_secondary']};
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-size: 0.75rem; color: {colors['text_secondary']}; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.5px;
     }}
     .metric-card .value {{
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: {colors['text']};
-        margin: 4px 0;
+        font-size: 1.8rem; font-weight: 700; color: {colors['text']}; margin: 4px 0;
     }}
-    .metric-card .sub {{
-        font-size: 0.7rem;
-        color: {colors['text_secondary']};
-    }}
+    .metric-card .sub {{ font-size: 0.7rem; color: {colors['text_secondary']}; }}
     .result-card {{
-        background: {colors['card_bg']};
-        border-radius: 12px;
-        padding: 1.5rem;
+        background: {colors['card_bg']}; border-radius: 12px; padding: 1.5rem;
         box-shadow: 0 2px 12px rgba(0,0,0,{0.4 if theme=='dark' else 0.08});
-        text-align: center;
-        border-top: 4px solid {colors['primary']};
-        height: 100%;
+        text-align: center; border-top: 4px solid {colors['primary']}; height: 100%;
     }}
-    .result-card .label {{
-        font-size: 0.8rem;
-        color: {colors['text_secondary']};
-        font-weight: 500;
-    }}
-    .result-card .value {{
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: {colors['text']};
-        margin: 6px 0;
-    }}
-    
-    /* ===== 按钮 ===== */
+    .result-card .label {{ font-size: 0.8rem; color: {colors['text_secondary']}; font-weight: 500; }}
+    .result-card .value {{ font-size: 2.2rem; font-weight: 700; color: {colors['text']}; margin: 6px 0; }}
     {button_css}
-    
-    /* ===== Tab ===== */
     .stTabs [data-baseweb="tab-list"] {{
-        gap: 4px;
-        background: {colors['tab_bg']};
-        padding: 6px;
-        border-radius: 12px;
-        border: 1px solid {colors['border']};
+        gap: 4px; background: {colors['tab_bg']}; padding: 6px;
+        border-radius: 12px; border: 1px solid {colors['border']};
     }}
     .stTabs [data-baseweb="tab"] {{
-        border-radius: 8px;
-        padding: 8px 20px;
-        font-weight: 600;
-        color: {colors['tab_text']};
-        transition: all 0.3s ease;
+        border-radius: 8px; padding: 8px 20px; font-weight: 600;
+        color: {colors['tab_text']}; transition: all 0.3s ease;
     }}
     .stTabs [aria-selected="true"] {{
-        background: {colors['tab_active']};
-        color: {colors['tab_active_text']};
+        background: {colors['tab_active']}; color: {colors['tab_active_text']};
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }}
-    
-    /* ===== 状态标签 ===== */
     .status-normal {{ color: {colors['success']}; font-weight: 700; }}
     .status-warning {{ color: {colors['warning']}; font-weight: 700; }}
     .status-danger {{ color: {colors['danger']}; font-weight: 700; }}
-    
-    /* ===== 分割线 ===== */
     hr {{ border-color: {colors['border']} !important; }}
-    
-    /* ===== 信息框 ===== */
-    .stAlert {{
-        background-color: {colors['card_bg']} !important;
-        border-color: {colors['border']} !important;
-        color: {colors['text']} !important;
-    }}
-    
-    /* ===== 明亮模式强制覆盖 ===== */
+    .stAlert {{ background-color: {colors['card_bg']} !important; border-color: {colors['border']} !important; color: {colors['text']} !important; }}
     {light_overrides}
     </style>
     """
@@ -433,19 +281,7 @@ st.markdown(get_css(colors, st.session_state.theme), unsafe_allow_html=True)
 st.markdown(f'<div class="main-header">💧 污水处理智能分析平台</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="sub-header">基于进水参数的污泥指标预测与SRT优化系统</div>', unsafe_allow_html=True)
 
-# ============ 初始化session_state ============
-if 'df_loaded' not in st.session_state:
-    st.session_state.df_loaded = None
-if 'data_source' not in st.session_state:
-    st.session_state.data_source = 'default'
-if 'predicted' not in st.session_state:
-    st.session_state.predicted = False
-if 'pred_values' not in st.session_state:
-    st.session_state.pred_values = {}
-if 'input_values' not in st.session_state:
-    st.session_state.input_values = {}
-
-# ============ 加载默认数据 ============
+# ============ 加载数据 ============
 @st.cache_data
 def load_default_data():
     try:
@@ -464,20 +300,20 @@ def load_data():
     else:
         return load_default_data()
 
-# ============ 数据准备 ============
+df = load_data()
+if df is None:
+    st.error("❌ 找不到数据文件！请上传Excel文件或确保默认数据存在。")
+    st.stop()
+
 X_columns = ['Qoutm3/d', 'BOD5 (mg/l)', 'CODcr(mg/l)', 'SS(mg/l)', 
              'NH3-N(mg/l)', 'TP(mg/l)', 'TN(mg/l)', 'Tin℃']
 y_columns = ['F/M(%)', 'SVI', 'SRT']
 
 x_names_cn = {
-    'Qoutm3/d': '进水流量',
-    'BOD5 (mg/l)': '进水BOD5',
-    'CODcr(mg/l)': '进水CODcr',
-    'SS(mg/l)': '进水SS',
-    'NH3-N(mg/l)': '进水NH3-N',
-    'TP(mg/l)': '进水TP',
-    'TN(mg/l)': '进水TN',
-    'Tin℃': '进水水温'
+    'Qoutm3/d': '进水流量', 'BOD5 (mg/l)': '进水BOD5',
+    'CODcr(mg/l)': '进水CODcr', 'SS(mg/l)': '进水SS',
+    'NH3-N(mg/l)': '进水NH3-N', 'TP(mg/l)': '进水TP',
+    'TN(mg/l)': '进水TN', 'Tin℃': '进水水温'
 }
 y_names_cn = {
     'F/M(%)': '有机质占比',
@@ -485,26 +321,16 @@ y_names_cn = {
     'SRT': 'SRT (污泥龄)'
 }
 x_names_en = {
-    'Qoutm3/d': 'Flow Rate',
-    'BOD5 (mg/l)': 'BOD5',
-    'CODcr(mg/l)': 'CODcr',
-    'SS(mg/l)': 'SS',
-    'NH3-N(mg/l)': 'NH3-N',
-    'TP(mg/l)': 'TP',
-    'TN(mg/l)': 'TN',
-    'Tin℃': 'Temp'
+    'Qoutm3/d': 'Flow Rate', 'BOD5 (mg/l)': 'BOD5',
+    'CODcr(mg/l)': 'CODcr', 'SS(mg/l)': 'SS',
+    'NH3-N(mg/l)': 'NH3-N', 'TP(mg/l)': 'TP',
+    'TN(mg/l)': 'TN', 'Tin℃': 'Temp'
 }
 y_names_en = {
     'F/M(%)': 'F/M Ratio',
     'SVI': 'SVI',
     'SRT': 'SRT'
 }
-
-# ============ 加载数据 ============
-df = load_data()
-if df is None:
-    st.error("❌ 找不到数据文件！请上传Excel文件或确保默认数据存在。")
-    st.stop()
 
 available_X = [col for col in X_columns if col in df.columns]
 available_y = [col for col in y_columns if col in df.columns]
@@ -527,8 +353,7 @@ if date_col:
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X_data)
 
-# ============ 训练模型 ============
-@st.cache_resource
+# ============ 训练模型（懒加载） ============
 def train_models(X_data, y_data):
     X_scaled = scaler.fit_transform(X_data)
     models = {}
@@ -546,11 +371,11 @@ def train_models(X_data, y_data):
         lasso = Lasso(alpha=0.1, random_state=42, max_iter=1000)
         lasso.fit(X_train, y_train)
         
-        rf = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
+        rf = RandomForestRegressor(n_estimators=30, random_state=42, n_jobs=-1)
         rf.fit(X_train, y_train)
         
         xgb_model = xgb.XGBRegressor(
-            n_estimators=50, learning_rate=0.1, max_depth=4,
+            n_estimators=30, learning_rate=0.1, max_depth=4,
             random_state=42, verbosity=0
         )
         xgb_model.fit(X_train, y_train)
@@ -572,8 +397,6 @@ def train_models(X_data, y_data):
             }
     
     return models, results
-
-models, results = train_models(X_data, y_data)
 
 def predict_value(input_dict, model):
     input_array = np.array([input_dict[col] for col in available_X]).reshape(1, -1)
@@ -599,12 +422,24 @@ with st.sidebar:
         )
     
     st.markdown("---")
+    
+    # ===== 开始预测按钮 =====
     if st.button("🚀 开始预测", use_container_width=True):
         st.session_state.predicted = True
         st.session_state.pred_values = {}
         st.session_state.input_values = input_values.copy()
+        
+        # 只在点击预测时才训练模型！
+        if not st.session_state.model_trained:
+            with st.spinner("⏳ 训练模型中..."):
+                models, results = train_models(X_data, y_data)
+                st.session_state.models = models
+                st.session_state.results = results
+                st.session_state.model_trained = True
+        
+        # 预测
         for y_col in available_y:
-            model = models[y_col]['xgb']
+            model = st.session_state.models[y_col]['xgb']
             pred_val = predict_value(input_values, model)
             st.session_state.pred_values[y_col] = pred_val
         st.rerun()
@@ -612,14 +447,11 @@ with st.sidebar:
     # ===== 主题切换 =====
     st.markdown("---")
     st.markdown("## 🎨 主题设置")
-    
     col1, col2 = st.columns(2)
-    
     with col1:
         if st.button("🌙 暗色", use_container_width=True, key="theme_dark"):
             st.session_state.theme = 'dark'
             st.rerun()
-    
     with col2:
         if st.button("☀️ 明亮", use_container_width=True, key="theme_light"):
             st.session_state.theme = 'light'
@@ -628,11 +460,9 @@ with st.sidebar:
     current_theme = "🌙 暗色模式" if st.session_state.theme == 'dark' else "☀️ 明亮模式"
     st.markdown(f"<p style='text-align:center;color:{colors['text_secondary']};font-size:0.8rem;font-weight:600;'>当前: {current_theme}</p>", unsafe_allow_html=True)
     
-    # ===== Excel导入功能 =====
+    # ===== 数据导入 =====
     st.markdown("---")
     st.markdown("## 📁 导入数据")
-    st.markdown("上传Excel文件替换默认数据")
-    
     uploaded_file = st.file_uploader(
         "选择Excel文件",
         type=['xlsx', 'xls'],
@@ -649,8 +479,9 @@ with st.sidebar:
             else:
                 st.session_state.df_loaded = uploaded_df
                 st.session_state.data_source = 'uploaded'
+                st.session_state.model_trained = False  # 重置训练状态
                 st.success(f"✅ 成功导入 {len(uploaded_df)} 行数据！")
-                st.info("🔄 请点击'应用新数据'按钮更新模型")
+                st.info("🔄 请点击'开始预测'重新训练模型")
                 if st.button("🔄 应用新数据"):
                     st.rerun()
         except Exception as e:
@@ -667,7 +498,7 @@ SVI_MIN, SVI_MAX = 50.0, 150.0
 SRT_MIN, SRT_MAX = 5.0, 15.0
 
 # ============ 主区域 ============
-if 'predicted' in st.session_state and st.session_state.predicted:
+if st.session_state.predicted and st.session_state.pred_values:
     pred_fm = st.session_state.pred_values.get('F/M(%)', 0)
     pred_svi = st.session_state.pred_values.get('SVI', 0)
     pred_srt = st.session_state.pred_values.get('SRT', 0)
@@ -730,22 +561,17 @@ if 'predicted' in st.session_state and st.session_state.predicted:
     st.markdown("---")
     st.markdown("### 💾 导出预测结果")
     
-    export_data = {
-        '输入参数': [],
-        '数值': []
-    }
+    export_data = {'输入参数': [], '数值': []}
     for col, val in input_vals.items():
         export_data['输入参数'].append(x_names_cn.get(col, col))
         export_data['数值'].append(val)
     
     export_data['输入参数'].extend(['预测有机质占比(F/M)', '预测SVI', '预测SRT', '推荐最优污泥龄'])
     export_data['数值'].extend([f"{pred_fm:.2f}%", f"{pred_svi:.2f}", f"{pred_srt:.2f}天", f"{opt_srt:.2f}天"])
-    
     export_data['输入参数'].extend(['有机质占比状态', 'SVI状态', 'SRT状态'])
     export_data['数值'].extend([fm_status, svi_status, srt_status])
     
     export_df = pd.DataFrame(export_data)
-    
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         export_df.to_excel(writer, sheet_name='预测结果', index=False)
@@ -782,7 +608,7 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 # ===== Tab 1: 预测分析 =====
 with tab1:
     st.markdown("### 🎯 预测结果详情")
-    if 'predicted' in st.session_state and st.session_state.predicted:
+    if st.session_state.predicted and st.session_state.pred_values:
         col1, col2, col3 = st.columns(3)
         
         with col1:
@@ -956,240 +782,251 @@ with tab2:
     else:
         st.warning("⚠️ 数据中未找到日期列")
 
-# ===== Tab 3: 特征重要性 + 热力图 =====
+# ===== Tab 3: 特征重要性 + 热力图（懒加载） =====
 with tab3:
     st.markdown("### 📊 特征重要性柱状图")
-    model_type = st.radio("选择模型", ['XGBoost', 'Random Forest', 'Lasso'], horizontal=True, key="importance")
-    target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key="importance_target")
     
-    if target:
-        model_key = {'XGBoost': 'xgb', 'Random Forest': 'rf', 'Lasso': 'lasso'}[model_type]
-        if model_key == 'lasso':
-            importance = np.abs(models[target]['lasso'].coef_)
-        else:
-            importance = models[target][model_key].feature_importances_
+    # 检查模型是否已训练
+    if not st.session_state.model_trained:
+        st.warning("⚠️ 请先点击侧边栏的 '开始预测' 按钮训练模型")
+    else:
+        model_type = st.radio("选择模型", ['XGBoost', 'Random Forest', 'Lasso'], horizontal=True, key="importance")
+        target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key="importance_target")
         
-        sorted_idx = np.argsort(importance)[::-1]
-        sorted_names = [x_names_en.get(available_X[i], available_X[i]) for i in sorted_idx]
-        sorted_values = importance[sorted_idx]
+        if target:
+            model_key = {'XGBoost': 'xgb', 'Random Forest': 'rf', 'Lasso': 'lasso'}[model_type]
+            if model_key == 'lasso':
+                importance = np.abs(st.session_state.models[target]['lasso'].coef_)
+            else:
+                importance = st.session_state.models[target][model_key].feature_importances_
+            
+            sorted_idx = np.argsort(importance)[::-1]
+            sorted_names = [x_names_en.get(available_X[i], available_X[i]) for i in sorted_idx]
+            sorted_values = importance[sorted_idx]
+            
+            fig, ax = plt.subplots(figsize=(10, 5))
+            bar_color = '#58a6ff' if st.session_state.theme == 'dark' else '#1a5276'
+            text_color = colors['text_color']
+            
+            bars = ax.barh(sorted_names, sorted_values, color=bar_color)
+            ax.set_xlabel('Feature Importance', fontsize=12, fontweight='bold', color=text_color)
+            ax.set_title(f'{model_type} - {y_names_en.get(target, target)} Feature Importance', fontsize=14, fontweight='bold', color=text_color)
+            ax.invert_yaxis()
+            ax.set_facecolor(colors['plot_face'])
+            fig.patch.set_facecolor(colors['plot_face'])
+            for i, v in enumerate(sorted_values):
+                ax.text(v + 0.005, i, f'{v:.3f}', va='center', color=text_color, fontsize=9, fontweight='bold')
+            plt.tight_layout()
+            st.pyplot(fig)
         
-        fig, ax = plt.subplots(figsize=(10, 5))
-        bar_color = '#58a6ff' if st.session_state.theme == 'dark' else '#1a5276'
+        st.markdown("---")
+        st.markdown("### 🔥 特征相关性热力图")
+        st.markdown("展示所有自变量与因变量之间的相关性")
+        
+        corr_data = pd.concat([X_data, y_data], axis=1)
+        corr_matrix = corr_data.corr()
+        rename_map = {**x_names_en, **y_names_en}
+        corr_matrix = corr_matrix.rename(columns=rename_map, index=rename_map)
+        
+        fig, ax = plt.subplots(figsize=(11, 8))
+        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0,
+                   fmt='.2f', square=True, linewidths=0.5, ax=ax,
+                   cbar_kws={'shrink': 0.8})
         text_color = colors['text_color']
-        
-        bars = ax.barh(sorted_names, sorted_values, color=bar_color)
-        ax.set_xlabel('Feature Importance', fontsize=12, fontweight='bold', color=text_color)
-        ax.set_title(f'{model_type} - {y_names_en.get(target, target)} Feature Importance', fontsize=14, fontweight='bold', color=text_color)
-        ax.invert_yaxis()
+        ax.set_title('Feature Correlation Heatmap', fontsize=14, fontweight='bold', color=text_color)
         ax.set_facecolor(colors['plot_face'])
         fig.patch.set_facecolor(colors['plot_face'])
-        for i, v in enumerate(sorted_values):
-            ax.text(v + 0.005, i, f'{v:.3f}', va='center', color=text_color, fontsize=9, fontweight='bold')
         plt.tight_layout()
         st.pyplot(fig)
-    
-    st.markdown("---")
-    st.markdown("### 🔥 特征相关性热力图")
-    st.markdown("展示所有自变量与因变量之间的相关性")
-    
-    corr_data = pd.concat([X_data, y_data], axis=1)
-    corr_matrix = corr_data.corr()
-    rename_map = {**x_names_en, **y_names_en}
-    corr_matrix = corr_matrix.rename(columns=rename_map, index=rename_map)
-    
-    fig, ax = plt.subplots(figsize=(11, 8))
-    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0,
-               fmt='.2f', square=True, linewidths=0.5, ax=ax,
-               cbar_kws={'shrink': 0.8})
-    text_color = colors['text_color']
-    ax.set_title('Feature Correlation Heatmap', fontsize=14, fontweight='bold', color=text_color)
-    ax.set_facecolor(colors['plot_face'])
-    fig.patch.set_facecolor(colors['plot_face'])
-    plt.tight_layout()
-    st.pyplot(fig)
 
-# ===== Tab 4: 模型评价 =====
+# ===== Tab 4: 模型评价（懒加载） =====
 with tab4:
     st.markdown("### 📉 真实值 vs 预测值散点图")
-    target_eval = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key='eval')
     
-    if target_eval:
-        model = models[target_eval]['xgb']
-        y_test = models[target_eval]['y_test']
-        y_pred = model.predict(models[target_eval]['X_test'])
-        r2 = r2_score(y_test, y_pred)
-        mse = mean_squared_error(y_test, y_pred)
-        rmse = np.sqrt(mse)
-        mae = mean_absolute_error(y_test, y_pred)
+    if not st.session_state.model_trained:
+        st.warning("⚠️ 请先点击侧边栏的 '开始预测' 按钮训练模型")
+    else:
+        target_eval = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key='eval')
         
-        fig, ax = plt.subplots(figsize=(8, 6))
-        text_color = colors['text_color']
-        ax.scatter(y_test, y_pred, alpha=0.6, color='#58a6ff', s=60)
-        ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Ideal')
-        ax.set_xlabel('True Value', fontsize=12, fontweight='bold', color=text_color)
-        ax.set_ylabel('Predicted Value', fontsize=12, fontweight='bold', color=text_color)
-        ax.set_title(f'{y_names_en.get(target_eval, target_eval)} - R² = {r2:.4f}', fontsize=14, fontweight='bold', color=text_color)
-        ax.legend(loc='upper left', facecolor=colors['plot_face'], edgecolor=colors['border'], labelcolor=text_color)
-        ax.set_facecolor(colors['plot_face'])
-        fig.patch.set_facecolor(colors['plot_face'])
-        plt.tight_layout()
-        st.pyplot(fig)
-        
-        st.markdown("---")
-        st.markdown("### 📊 模型评价指标")
-        st.markdown("R²、MSE、RMSE、MAE 综合评价模型性能")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("R² 分数", f"{r2:.4f}", help="越接近1越好")
-        with col2:
-            st.metric("MSE", f"{mse:.4f}", help="均方误差，越小越好")
-        with col3:
-            st.metric("RMSE", f"{rmse:.4f}", help="均方根误差，越小越好")
-        with col4:
-            st.metric("MAE", f"{mae:.4f}", help="平均绝对误差，越小越好")
-        
-        st.markdown("---")
-        st.markdown("### 📊 各模型性能对比")
-        
-        model_names = ['Linear', 'Lasso', 'RF', 'XGB']
-        r2_values = [results[target_eval]['lr']['r2'], 
-                     results[target_eval]['lasso']['r2'],
-                     results[target_eval]['rf']['r2'], 
-                     results[target_eval]['xgb']['r2']]
-        rmse_values = [results[target_eval]['lr']['rmse'], 
-                       results[target_eval]['lasso']['rmse'],
-                       results[target_eval]['rf']['rmse'], 
-                       results[target_eval]['xgb']['rmse']]
-        
-        fig2, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-        text_color = colors['text_color']
-        
-        # R²对比
-        bars1 = ax1.bar(model_names, r2_values, color=['#58a6ff', '#f0883e', '#3fb950', '#f85149'])
-        ax1.set_ylabel('R² Score', fontsize=12, color=text_color)
-        ax1.set_title('R² Comparison', fontsize=14, fontweight='bold', color=text_color)
-        ax1.set_ylim(0, 1.05)
-        ax1.set_facecolor(colors['plot_face'])
-        fig2.patch.set_facecolor(colors['plot_face'])
-        for bar, val in zip(bars1, r2_values):
-            ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                    f'{val:.3f}', ha='center', va='bottom', color=text_color, fontsize=9)
-        
-        # RMSE对比
-        bars2 = ax2.bar(model_names, rmse_values, color=['#58a6ff', '#f0883e', '#3fb950', '#f85149'])
-        ax2.set_ylabel('RMSE', fontsize=12, color=text_color)
-        ax2.set_title('RMSE Comparison', fontsize=14, fontweight='bold', color=text_color)
-        ax2.set_facecolor(colors['plot_face'])
-        for bar, val in zip(bars2, rmse_values):
-            ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                    f'{val:.3f}', ha='center', va='bottom', color=text_color, fontsize=9)
-        
-        plt.tight_layout()
-        st.pyplot(fig2)
+        if target_eval:
+            model = st.session_state.models[target_eval]['xgb']
+            y_test = st.session_state.models[target_eval]['y_test']
+            y_pred = model.predict(st.session_state.models[target_eval]['X_test'])
+            r2 = r2_score(y_test, y_pred)
+            mse = mean_squared_error(y_test, y_pred)
+            rmse = np.sqrt(mse)
+            mae = mean_absolute_error(y_test, y_pred)
+            
+            fig, ax = plt.subplots(figsize=(8, 6))
+            text_color = colors['text_color']
+            ax.scatter(y_test, y_pred, alpha=0.6, color='#58a6ff', s=60)
+            ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Ideal')
+            ax.set_xlabel('True Value', fontsize=12, fontweight='bold', color=text_color)
+            ax.set_ylabel('Predicted Value', fontsize=12, fontweight='bold', color=text_color)
+            ax.set_title(f'{y_names_en.get(target_eval, target_eval)} - R² = {r2:.4f}', fontsize=14, fontweight='bold', color=text_color)
+            ax.legend(loc='upper left', facecolor=colors['plot_face'], edgecolor=colors['border'], labelcolor=text_color)
+            ax.set_facecolor(colors['plot_face'])
+            fig.patch.set_facecolor(colors['plot_face'])
+            plt.tight_layout()
+            st.pyplot(fig)
+            
+            st.markdown("---")
+            st.markdown("### 📊 模型评价指标")
+            st.markdown("R²、MSE、RMSE、MAE 综合评价模型性能")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("R² 分数", f"{r2:.4f}", help="越接近1越好")
+            with col2:
+                st.metric("MSE", f"{mse:.4f}", help="均方误差，越小越好")
+            with col3:
+                st.metric("RMSE", f"{rmse:.4f}", help="均方根误差，越小越好")
+            with col4:
+                st.metric("MAE", f"{mae:.4f}", help="平均绝对误差，越小越好")
+            
+            st.markdown("---")
+            st.markdown("### 📊 各模型性能对比")
+            
+            model_names = ['Linear', 'Lasso', 'RF', 'XGB']
+            r2_values = [st.session_state.results[target_eval]['lr']['r2'], 
+                         st.session_state.results[target_eval]['lasso']['r2'],
+                         st.session_state.results[target_eval]['rf']['r2'], 
+                         st.session_state.results[target_eval]['xgb']['r2']]
+            rmse_values = [st.session_state.results[target_eval]['lr']['rmse'], 
+                           st.session_state.results[target_eval]['lasso']['rmse'],
+                           st.session_state.results[target_eval]['rf']['rmse'], 
+                           st.session_state.results[target_eval]['xgb']['rmse']]
+            
+            fig2, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+            text_color = colors['text_color']
+            
+            bars1 = ax1.bar(model_names, r2_values, color=['#58a6ff', '#f0883e', '#3fb950', '#f85149'])
+            ax1.set_ylabel('R² Score', fontsize=12, color=text_color)
+            ax1.set_title('R² Comparison', fontsize=14, fontweight='bold', color=text_color)
+            ax1.set_ylim(0, 1.05)
+            ax1.set_facecolor(colors['plot_face'])
+            fig2.patch.set_facecolor(colors['plot_face'])
+            for bar, val in zip(bars1, r2_values):
+                ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                        f'{val:.3f}', ha='center', va='bottom', color=text_color, fontsize=9)
+            
+            bars2 = ax2.bar(model_names, rmse_values, color=['#58a6ff', '#f0883e', '#3fb950', '#f85149'])
+            ax2.set_ylabel('RMSE', fontsize=12, color=text_color)
+            ax2.set_title('RMSE Comparison', fontsize=14, fontweight='bold', color=text_color)
+            ax2.set_facecolor(colors['plot_face'])
+            for bar, val in zip(bars2, rmse_values):
+                ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                        f'{val:.3f}', ha='center', va='bottom', color=text_color, fontsize=9)
+            
+            plt.tight_layout()
+            st.pyplot(fig2)
 
-# ===== Tab 5: SHAP解释 =====
+# ===== Tab 5: SHAP解释（懒加载） =====
 with tab5:
     st.markdown("### 🔍 SHAP 模型解释")
     st.markdown("SHAP值解释每个特征对预测结果的贡献")
     
-    shap_target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key='shap')
-    
-    if st.button("生成 SHAP 解释", key="shap_btn"):
-        with st.spinner("⏳ 计算SHAP值中..."):
-            try:
-                model = models[shap_target]['xgb']
-                X_train = models[shap_target]['X_train']
-                explainer = shap.TreeExplainer(model)
-                shap_values = explainer.shap_values(X_train)
-                feature_names = [x_names_en.get(col, col) for col in available_X]
-                
-                st.markdown("#### 📊 SHAP 蜂群图")
-                fig, ax = plt.subplots(figsize=(10, 5))
-                ax.set_facecolor(colors['plot_face'])
-                fig.patch.set_facecolor(colors['plot_face'])
-                
-                shap.summary_plot(
-                    shap_values, 
-                    X_train, 
-                    feature_names=feature_names,
-                    show=False,
-                    color_bar=True,
-                    cmap=plt.get_cmap('coolwarm')
-                )
-                
-                ax = plt.gca()
-                text_color = colors['text_color']
-                ax.tick_params(colors=text_color, labelsize=10)
-                ax.xaxis.label.set_color(text_color)
-                ax.yaxis.label.set_color(text_color)
-                ax.title.set_color(text_color)
-                for text in ax.texts:
-                    text.set_color(text_color)
-                
-                plt.tight_layout()
-                st.pyplot(fig)
-                
-                st.markdown("#### 📊 SHAP 特征重要性")
-                fig2, ax2 = plt.subplots(figsize=(10, 5))
-                ax2.set_facecolor(colors['plot_face'])
-                fig2.patch.set_facecolor(colors['plot_face'])
-                
-                shap.summary_plot(
-                    shap_values, 
-                    X_train, 
-                    feature_names=feature_names, 
-                    plot_type="bar",
-                    show=False,
-                    color='#58a6ff' if st.session_state.theme == 'dark' else '#1a5276'
-                )
-                
-                ax2 = plt.gca()
-                ax2.tick_params(colors=text_color, labelsize=10)
-                ax2.xaxis.label.set_color(text_color)
-                ax2.yaxis.label.set_color(text_color)
-                ax2.title.set_color(text_color)
-                for patch in ax2.patches:
-                    patch.set_color('#58a6ff' if st.session_state.theme == 'dark' else '#1a5276')
-                
-                plt.tight_layout()
-                st.pyplot(fig2)
-                
-                st.markdown("---")
-                st.markdown("#### 🎯 当前输入的SHAP解释")
-                
-                input_array = np.array([st.session_state.input_values.get(col, 0) for col in available_X]).reshape(1, -1)
-                input_scaled = scaler.transform(input_array)
-                
-                single_shap = explainer.shap_values(input_scaled)
-                
-                contrib_data = []
-                for i, name in enumerate(feature_names):
-                    shap_val = single_shap[0][i]
-                    contrib_data.append({
-                        '特征': name,
-                        'SHAP值': f"{shap_val:.3f}",
-                        '影响方向': "⬆️ 正向" if shap_val > 0 else "⬇️ 负向"
-                    })
-                
-                contrib_df = pd.DataFrame(contrib_data)
-                st.dataframe(contrib_df, use_container_width=True)
-                
-                pred_val = model.predict(input_scaled)[0]
-                base_val = explainer.expected_value
-                
-                st.markdown(f"""
-                <div style="background:{colors['card_bg']};padding:1rem;border-radius:10px;border:1px solid {colors['border']};margin-top:1rem;">
-                    <b style="color:{colors['primary']};">预测 {y_names_cn.get(shap_target, shap_target)}:</b> 
-                    <span style="color:{colors['text']};font-size:1.2rem;font-weight:bold;">{pred_val:.3f}</span>
-                    <br>
-                    <b style="color:{colors['text_secondary']};">基准值:</b> 
-                    <span style="color:{colors['text']};">{base_val:.3f}</span>
-                </div>
-                """, unsafe_allow_html=True)
-                
-            except Exception as e:
-                st.error(f"SHAP 计算失败: {e}")
+    if not st.session_state.model_trained:
+        st.warning("⚠️ 请先点击侧边栏的 '开始预测' 按钮训练模型")
+    else:
+        shap_target = st.selectbox("选择目标变量", available_y, format_func=lambda x: y_names_cn.get(x, x), key='shap')
+        
+        # 只在点击按钮时计算SHAP
+        if st.button("生成 SHAP 解释", key="shap_btn"):
+            with st.spinner("⏳ 计算SHAP值中..."):
+                try:
+                    model = st.session_state.models[shap_target]['xgb']
+                    X_train = st.session_state.models[shap_target]['X_train']
+                    explainer = shap.TreeExplainer(model)
+                    shap_values = explainer.shap_values(X_train)
+                    feature_names = [x_names_en.get(col, col) for col in available_X]
+                    
+                    st.markdown("#### 📊 SHAP 蜂群图")
+                    fig, ax = plt.subplots(figsize=(10, 5))
+                    ax.set_facecolor(colors['plot_face'])
+                    fig.patch.set_facecolor(colors['plot_face'])
+                    
+                    shap.summary_plot(
+                        shap_values, 
+                        X_train, 
+                        feature_names=feature_names,
+                        show=False,
+                        color_bar=True,
+                        cmap=plt.get_cmap('coolwarm')
+                    )
+                    
+                    ax = plt.gca()
+                    text_color = colors['text_color']
+                    ax.tick_params(colors=text_color, labelsize=10)
+                    ax.xaxis.label.set_color(text_color)
+                    ax.yaxis.label.set_color(text_color)
+                    ax.title.set_color(text_color)
+                    for text in ax.texts:
+                        text.set_color(text_color)
+                    
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    
+                    st.markdown("#### 📊 SHAP 特征重要性")
+                    fig2, ax2 = plt.subplots(figsize=(10, 5))
+                    ax2.set_facecolor(colors['plot_face'])
+                    fig2.patch.set_facecolor(colors['plot_face'])
+                    
+                    shap.summary_plot(
+                        shap_values, 
+                        X_train, 
+                        feature_names=feature_names, 
+                        plot_type="bar",
+                        show=False,
+                        color='#58a6ff' if st.session_state.theme == 'dark' else '#1a5276'
+                    )
+                    
+                    ax2 = plt.gca()
+                    ax2.tick_params(colors=text_color, labelsize=10)
+                    ax2.xaxis.label.set_color(text_color)
+                    ax2.yaxis.label.set_color(text_color)
+                    ax2.title.set_color(text_color)
+                    for patch in ax2.patches:
+                        patch.set_color('#58a6ff' if st.session_state.theme == 'dark' else '#1a5276')
+                    
+                    plt.tight_layout()
+                    st.pyplot(fig2)
+                    
+                    st.markdown("---")
+                    st.markdown("#### 🎯 当前输入的SHAP解释")
+                    
+                    input_array = np.array([st.session_state.input_values.get(col, 0) for col in available_X]).reshape(1, -1)
+                    input_scaled = scaler.transform(input_array)
+                    
+                    single_shap = explainer.shap_values(input_scaled)
+                    
+                    contrib_data = []
+                    for i, name in enumerate(feature_names):
+                        shap_val = single_shap[0][i]
+                        contrib_data.append({
+                            '特征': name,
+                            'SHAP值': f"{shap_val:.3f}",
+                            '影响方向': "⬆️ 正向" if shap_val > 0 else "⬇️ 负向"
+                        })
+                    
+                    contrib_df = pd.DataFrame(contrib_data)
+                    st.dataframe(contrib_df, use_container_width=True)
+                    
+                    pred_val = model.predict(input_scaled)[0]
+                    base_val = explainer.expected_value
+                    
+                    st.markdown(f"""
+                    <div style="background:{colors['card_bg']};padding:1rem;border-radius:10px;border:1px solid {colors['border']};margin-top:1rem;">
+                        <b style="color:{colors['primary']};">预测 {y_names_cn.get(shap_target, shap_target)}:</b> 
+                        <span style="color:{colors['text']};font-size:1.2rem;font-weight:bold;">{pred_val:.3f}</span>
+                        <br>
+                        <b style="color:{colors['text_secondary']};">基准值:</b> 
+                        <span style="color:{colors['text']};">{base_val:.3f}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                except Exception as e:
+                    st.error(f"SHAP 计算失败: {e}")
 
 # ===== Tab 6: 数据总览 =====
 with tab6:
